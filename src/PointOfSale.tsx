@@ -4,7 +4,6 @@ import {
   Search, 
   Plus, 
   Trash2, 
-  Pencil, 
   X, 
   Home,
   Package,
@@ -16,14 +15,18 @@ import {
   Settings,
   Box,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Eye
 } from 'lucide-react'
 
 interface InvoiceItem {
   id: number
+  productCode: string
   productName: string
   quantity: number
+  unit: string
   unitPrice: number
+  discount: number
   total: number
 }
 
@@ -49,6 +52,29 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
   const [showAddInvoiceModal, setShowAddInvoiceModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [expandedSidebar, setExpandedSidebar] = useState(true)
+  const [newInvoiceNumber, setNewInvoiceNumber] = useState('')
+  
+  // Add Invoice Modal states
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState('')
+  const [itemQuantity, setItemQuantity] = useState('1')
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([])
+  
+  // Categories and products data
+  const categories = ['ملحقات', 'أجهزة', 'برمجيات']
+  const products = [
+    { code: '001', name: 'ماوس لاسلكي Logitech M185', category: 'ملحقات', sellPrice: 50.00, unit: 'قطعة' },
+    { code: '002', name: 'كيبورد ميكانيكي Redragon', category: 'ملحقات', sellPrice: 120.00, unit: 'قطعة' },
+    { code: '003', name: 'شاشة سامسونج 27 بوصة', category: 'أجهزة', sellPrice: 800.00, unit: 'قطعة' },
+    { code: '004', name: 'لابتوب Dell XPS 13', category: 'أجهزة', sellPrice: 3500.00, unit: 'قطعة' },
+    { code: '005', name: 'سماعات رأس Sony', category: 'ملحقات', sellPrice: 200.00, unit: 'قطعة' },
+    { code: '006', name: 'طابعة HP LaserJet', category: 'أجهزة', sellPrice: 450.00, unit: 'قطعة' },
+  ]
+  
+  // Filter products by selected category
+  const filteredProducts = selectedCategory 
+    ? products.filter(p => p.category === selectedCategory)
+    : products
   
   // Form states for edit modal
   const [invoiceNumber, setInvoiceNumber] = useState('')
@@ -71,8 +97,8 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
       remaining: 5700,
       status: 'partial',
       items: [
-        { id: 1, productName: 'لابتوب Dell XPS 13', quantity: 1, unitPrice: 25000, total: 25000 },
-        { id: 2, productName: 'ماوس لاسلكي', quantity: 1, unitPrice: 700, total: 700 }
+        { id: 1, productCode: '004', productName: 'لابتوب Dell XPS 13', quantity: 1, unit: 'قطعة', unitPrice: 25000, discount: 0, total: 25000 },
+        { id: 2, productCode: '001', productName: 'ماوس لاسلكي', quantity: 1, unit: 'قطعة', unitPrice: 700, discount: 0, total: 700 }
       ]
     },
     { 
@@ -86,8 +112,8 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
       remaining: 0,
       status: 'paid',
       items: [
-        { id: 1, productName: 'شاشة سامسونج 27 بوصة', quantity: 1, unitPrice: 20000, total: 20000 },
-        { id: 2, productName: 'كيبورد ميكانيكي', quantity: 1, unitPrice: 5700, total: 5700 }
+        { id: 1, productCode: '003', productName: 'شاشة سامسونج 27 بوصة', quantity: 1, unit: 'قطعة', unitPrice: 20000, discount: 0, total: 20000 },
+        { id: 2, productCode: '002', productName: 'كيبورد ميكانيكي', quantity: 1, unit: 'قطعة', unitPrice: 5700, discount: 0, total: 5700 }
       ]
     },
     { 
@@ -101,8 +127,8 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
       remaining: 25700,
       status: 'unpaid',
       items: [
-        { id: 1, productName: 'طابعة HP LaserJet', quantity: 1, unitPrice: 20000, total: 20000 },
-        { id: 2, productName: 'حبر طابعة', quantity: 2, unitPrice: 2850, total: 5700 }
+        { id: 1, productCode: '006', productName: 'طابعة HP LaserJet', quantity: 1, unit: 'قطعة', unitPrice: 20000, discount: 0, total: 20000 },
+        { id: 2, productCode: '007', productName: 'حبر طابعة', quantity: 2, unit: 'قطعة', unitPrice: 2850, discount: 0, total: 5700 }
       ]
     },
     { 
@@ -116,8 +142,8 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
       remaining: 10700,
       status: 'partial',
       items: [
-        { id: 1, productName: 'سماعات رأس Sony', quantity: 1, unitPrice: 15000, total: 15000 },
-        { id: 2, productName: 'ماوس لاسلكي', quantity: 2, unitPrice: 5350, total: 10700 }
+        { id: 1, productCode: '005', productName: 'سماعات رأس Sony', quantity: 1, unit: 'قطعة', unitPrice: 15000, discount: 0, total: 15000 },
+        { id: 2, productCode: '001', productName: 'ماوس لاسلكي', quantity: 2, unit: 'قطعة', unitPrice: 5350, discount: 0, total: 10700 }
       ]
     },
   ])
@@ -207,6 +233,56 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
   const openDeleteModal = (invoice: Invoice) => {
     setSelectedInvoice(invoice)
     setShowDeleteModal(true)
+  }
+
+  const openAddInvoiceModal = () => {
+    // Generate next invoice number
+    const maxNum = Math.max(...invoices.map(inv => {
+      const match = inv.invoiceNumber.match(/INV-2026-(\d+)/)
+      return match ? parseInt(match[1]) : 0
+    }), 0)
+    const nextNum = String(maxNum + 1).padStart(3, '0')
+    setNewInvoiceNumber(`INV-2026-${nextNum}`)
+    // Reset invoice items
+    setInvoiceItems([])
+    setSelectedCategory('')
+    setSelectedProduct('')
+    setItemQuantity('1')
+    setShowAddInvoiceModal(true)
+  }
+
+  const addItemToInvoice = () => {
+    if (!selectedProduct || !itemQuantity) return
+    
+    const product = products.find(p => p.code === selectedProduct)
+    if (!product) return
+    
+    const quantity = parseInt(itemQuantity) || 1
+    const total = product.sellPrice * quantity
+    
+    const newItem: InvoiceItem = {
+      id: Date.now(),
+      productCode: product.code,
+      productName: product.name,
+      quantity: quantity,
+      unit: product.unit,
+      unitPrice: product.sellPrice,
+      discount: 0,
+      total: total
+    }
+    
+    setInvoiceItems([...invoiceItems, newItem])
+    setSelectedProduct('')
+    setItemQuantity('1')
+  }
+
+  const removeInvoiceItem = (itemId: number) => {
+    setInvoiceItems(invoiceItems.filter(item => item.id !== itemId))
+  }
+
+  // Calculate invoice total
+  const calculateInvoiceTotal = () => {
+    return invoiceItems.reduce((sum, item) => sum + item.total, 0)
   }
 
   const openSalesModal = (invoice: Invoice) => {
@@ -311,11 +387,11 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
             <p className="text-gray-400">إدارة فواتير البيع والمبيعات</p>
           </div>
           <button 
-            onClick={() => setShowAddInvoiceModal(true)}
+            onClick={openAddInvoiceModal}
             className="bg-[#0e7eb5] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0a6a99] transition-colors"
           >
             <Plus size={20} />
-            بيع بسعر الجملة
+            إنشاء فاتورة جديد
           </button>
         </div>
 
@@ -384,7 +460,7 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
                         onClick={() => openEditModal(invoice)}
                         className="text-[#0e7eb5] hover:text-[#0a6a99]"
                       >
-                        <Pencil size={18} />
+                        <Eye size={18} />
                       </button>
                     </div>
                   </td>
@@ -423,18 +499,24 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الإجمالي</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الخصم</th>
                     <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">السعر</th>
                     <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكمية</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الوحدة</th>
                     <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">اسم الصنف</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكود</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedInvoice.items.map((item) => (
                     <tr key={item.id} className="border-t border-gray-200">
                       <td className="py-3 px-4 text-right font-medium">{item.total.toLocaleString()} ج</td>
+                      <td className="py-3 px-4 text-right text-red-500">{item.discount > 0 ? item.discount.toLocaleString() + ' ج' : '-'}</td>
                       <td className="py-3 px-4 text-right">{item.unitPrice.toLocaleString()} ج</td>
                       <td className="py-3 px-4 text-right">{item.quantity}</td>
+                      <td className="py-3 px-4 text-right">{item.unit}</td>
                       <td className="py-3 px-4 text-right">{item.productName}</td>
+                      <td className="py-3 px-4 text-right font-medium">{item.productCode}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -479,10 +561,10 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
         </div>
       )}
 
-      {/* Edit Invoice Modal */}
-      {showEditModal && (
+      {/* Edit Invoice Modal - View Only */}
+      {showEditModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md mx-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <button 
                 onClick={() => setShowEditModal(false)}
@@ -490,105 +572,88 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
               >
                 <X size={24} />
               </button>
-              <h3 className="text-xl font-bold text-[#0e7eb5]">تعديل بيانات الفاتوره</h3>
+              <h3 className="text-xl font-bold text-[#0e7eb5]">عرض الفاتورة</h3>
             </div>
             
-            <form onSubmit={handleEditInvoice}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">رقم الفاتوره</label>
-                <input
-                  type="text"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
+            {/* Invoice Header Info */}
+            <div className="flex items-center justify-end gap-6 mb-6 text-right">
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">اسم العميل</span>
+                <span className="font-bold text-gray-800">{selectedInvoice.customerName}</span>
               </div>
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">عدد الاصناف</span>
+                <span className="font-bold text-gray-800">{selectedInvoice.itemCount}</span>
+              </div>
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">التاريخ</span>
+                <span className="font-bold text-gray-800">{selectedInvoice.date}</span>
+              </div>
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">رقم الفاتورة</span>
+                <span className="font-bold text-gray-800">{selectedInvoice.invoiceNumber}</span>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">عدد الاصناف</label>
-                  <input
-                    type="number"
-                    value={itemCount}
-                    onChange={(e) => setItemCount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">التاريخ</label>
-                  <input
-                    type="text"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-              </div>
+            {/* Items Table */}
+            <div className="bg-gray-50 rounded-xl overflow-hidden mb-6">
+              <table className="w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الاجمالي</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر البيع</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر الشراء</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكمية</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الوحدة</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">اسم الصنف</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكود</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedInvoice.items.map((item) => (
+                    <tr key={item.id} className="border-t border-gray-200">
+                      <td className="py-3 px-4 text-right font-medium">{item.total.toLocaleString()} ج</td>
+                      <td className="py-3 px-4 text-right">{(item.unitPrice * 1.2).toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right">{item.unitPrice.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right">{item.quantity}</td>
+                      <td className="py-3 px-4 text-right">{item.unit}</td>
+                      <td className="py-3 px-4 text-right">{item.productName}</td>
+                      <td className="py-3 px-4 text-right font-medium">{item.productCode}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
+            {/* Summary Footer */}
+            <div className="flex items-center justify-end gap-8 pt-4 border-t border-gray-200">
+              <div className="text-right">
+                <span className="text-gray-600 text-sm block">طريقة الدفع</span>
+                <span className="font-bold">نقدي</span>
               </div>
+              <div className="text-right">
+                <span className="text-gray-600 text-sm block">المتبقي</span>
+                <span className="font-bold text-amber-500">{selectedInvoice.remaining.toLocaleString()} ج</span>
+              </div>
+              <div className="text-right">
+                <span className="text-gray-600 text-sm block">المدفوع</span>
+                <span className="font-bold text-[#0e7eb5]">{selectedInvoice.paid.toLocaleString()} ج</span>
+              </div>
+              <div className="text-right">
+                <span className="text-gray-600 text-sm block">الاجمالي</span>
+                <span className="font-bold text-amber-500">{selectedInvoice.total.toLocaleString()} ج</span>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">المدفوع</label>
-                  <input
-                    type="number"
-                    value={paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">الإجمالي</label>
-                  <input
-                    type="number"
-                    value={totalAmount}
-                    onChange={(e) => setTotalAmount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-gray-700 text-sm mb-2 text-right">المتبقي</label>
-                <input
-                  type="number"
-                  value={remainingAmount}
-                  onChange={(e) => setRemainingAmount(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-300 transition-colors"
-                >
-                  الغاء
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#0e7eb5] text-white py-3 rounded-lg font-bold hover:bg-[#0a6a99] transition-colors"
-                >
-                  حفظ
-                </button>
-              </div>
-            </form>
+            {/* Close Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="w-full bg-[#0e7eb5] text-white py-3 rounded-lg font-bold hover:bg-[#0a6a99] transition-colors"
+              >
+                اغلاق
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -604,92 +669,174 @@ function PointOfSale({ onLogout }: { onLogout: () => void }) {
               >
                 <X size={24} />
               </button>
-              <h3 className="text-xl font-bold text-[#0e7eb5]">إنشاء فاتورة جديده</h3>
+              <h3 className="text-xl font-bold text-[#0e7eb5]">إنشاء فاتورة جديد</h3>
             </div>
             
             <form onSubmit={(e) => { e.preventDefault(); setShowAddInvoiceModal(false); }}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">رقم الفاتورة</label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  placeholder="INV-2026-XXX"
-                />
+              {/* Invoice Number Display */}
+              <div className="flex items-center justify-end gap-4 mb-4">
+                <div className="text-left">
+                  <span className="text-gray-600 text-sm">رقم الفاتورة</span>
+                  <p className="text-xl font-bold text-gray-800">{newInvoiceNumber}</p>
+                </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">طريقة الدفع</label>
+                  <select className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]">
+                    <option value="cash">نقدي</option>
+                    <option value="card">بطاقة</option>
+                    <option value="credit">آجل</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
+                  <select className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]">
+                    <option value="">اختر العميل</option>
+                    <option value="1">أحمد محمد</option>
+                    <option value="2">محمد محمود</option>
+                    <option value="3">علي أحمد</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Category Selection */}
               <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
-                <select className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]">
-                  <option value="">اختر العميل</option>
-                  <option value="1">أحمد محمد</option>
-                  <option value="2">محمد محمود</option>
-                  <option value="3">علي أحمد</option>
+                <label className="block text-gray-700 text-sm mb-2 text-right">التصنيف</label>
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value)
+                    setSelectedProduct('')
+                  }}
+                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                >
+                  <option value="">اختر التصنيف</option>
+                  {categories.map((cat, idx) => (
+                    <option key={idx} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
+
+              {/* Product Selection and Quantity */}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الكمية</label>
+                  <input
+                    type="number"
+                    value={itemQuantity}
+                    onChange={(e) => setItemQuantity(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    placeholder="1"
+                    min="1"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم الصنف</label>
+                  <select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    disabled={!selectedCategory}
+                  >
+                    <option value="">{selectedCategory ? 'اختر الصنف' : 'اختر التصنيف أولاً'}</option>
+                    {filteredProducts.map((product) => (
+                      <option key={product.code} value={product.code}>
+                        {product.name} - {product.sellPrice.toLocaleString()} ج
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Add Item Button */}
+              <button
+                type="button"
+                onClick={addItemToInvoice}
+                disabled={!selectedProduct}
+                className={`w-full py-2 rounded-lg font-bold mb-4 transition-colors ${
+                  selectedProduct 
+                    ? 'bg-[#0e7eb5] text-white hover:bg-[#0a6a99]' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                + إضافة صنف للفاتورة
+              </button>
 
               {/* Products Table */}
               <div className="bg-gray-50 rounded-xl overflow-hidden mb-4">
                 <table className="w-full">
                   <thead className="bg-gray-100">
                     <tr>
+                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">حذف</th>
                       <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الإجمالي</th>
                       <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">السعر</th>
                       <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الكمية</th>
+                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الوحدة</th>
                       <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الصنف</th>
+                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">كود الصنف</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-t border-gray-200">
-                      <td className="py-2 px-3 text-right">25,700 ج</td>
-                      <td className="py-2 px-3 text-right">25,700 ج</td>
-                      <td className="py-2 px-3 text-right">1</td>
-                      <td className="py-2 px-3 text-right">لابتوب Dell XPS 13</td>
-                    </tr>
+                    {invoiceItems.length === 0 ? (
+                      <tr className="border-t border-gray-200">
+                        <td colSpan={7} className="py-4 px-3 text-center text-gray-500">
+                          لا توجد أصناف مضافة بعد
+                        </td>
+                      </tr>
+                    ) : (
+                      invoiceItems.map((item) => (
+                        <tr key={item.id} className="border-t border-gray-200">
+                          <td className="py-2 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeInvoiceItem(item.id)}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                          <td className="py-2 px-3 text-right font-medium">{item.total.toLocaleString()} ج</td>
+                          <td className="py-2 px-3 text-right">{item.unitPrice.toLocaleString()} ج</td>
+                          <td className="py-2 px-3 text-right">{item.quantity}</td>
+                          <td className="py-2 px-3 text-right">{item.unit}</td>
+                          <td className="py-2 px-3 text-right">{item.productName}</td>
+                          <td className="py-2 px-3 text-right font-medium">{item.productCode}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              <button
-                type="button"
-                className="w-full bg-[#0e7eb5] text-white py-2 rounded-lg font-bold mb-6 hover:bg-[#0a6a99] transition-colors"
-              >
-                بيع بسعر الجملة
-              </button>
-
               {/* Summary */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-right">
-                    <p className="text-gray-600 text-sm mb-1">الإجمالي قبل الخصم</p>
-                    <p className="text-xl font-bold text-[#0e7eb5]">1000 ج</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-600 text-sm mb-1">سلة البيع</p>
-                    <p className="text-gray-800">أحمد محمد</p>
-                  </div>
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="text-left">
+                  <span className="text-gray-600 text-sm">اجمالي الفاتورة</span>
+                  <p className="text-2xl font-bold text-[#0e7eb5]">{calculateInvoiceTotal().toLocaleString()} ج</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-right">
-                    <p className="text-gray-600 text-sm mb-1">طريقة الدفع</p>
-                    <select className="w-full border border-gray-200 rounded-lg py-2 px-3 text-right">
-                      <option value="cash">نقدي</option>
-                      <option value="card">بطاقة</option>
-                      <option value="credit">آجل</option>
-                    </select>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-600 text-sm mb-1">أحمد محمد</p>
-                    <p className="text-gray-800">الكاشير</p>
-                  </div>
+                <div className="text-right">
+                  <span className="text-gray-600 text-sm">عدد الأصناف</span>
+                  <p className="text-xl font-bold text-gray-800">{invoiceItems.length}</p>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-[#0e7eb5] text-white py-3 rounded-xl font-bold hover:bg-[#0a6a99] transition-colors"
-              >
-                إتمام البيع
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddInvoiceModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-300 transition-colors"
+                >
+                  الغاء
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-[#0e7eb5] text-white py-3 rounded-xl font-bold hover:bg-[#0a6a99] transition-colors"
+                >
+                  حفظ
+                </button>
+              </div>
             </form>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
 
 interface Product {
   id: number
+  code: string
   name: string
   category: string
   sellPrice: number
@@ -39,6 +40,7 @@ function Categories({ onLogout }: { onLogout: () => void }) {
   
   // Form states
   const [productName, setProductName] = useState('')
+  const [productCode, setProductCode] = useState('')
   const [category, setCategory] = useState('')
   const [sellPrice, setSellPrice] = useState('')
   const [costPrice, setCostPrice] = useState('')
@@ -51,12 +53,12 @@ function Categories({ onLogout }: { onLogout: () => void }) {
   const [newCategoryName, setNewCategoryName] = useState('')
 
   const [products, setProducts] = useState<Product[]>([
-    { id: 1, name: 'ماوس لاسلكي Logitech M185', category: 'ملحقات', sellPrice: 50.00, costPrice: 150.00, quantity: 15, unit: 'قطعة' },
-    { id: 2, name: 'كيبورد ميكانيكي Redragon', category: 'ملحقات', sellPrice: 120.00, costPrice: 80.00, quantity: 10, unit: 'قطعة' },
-    { id: 3, name: 'شاشة سامسونج 27 بوصة', category: 'أجهزة', sellPrice: 800.00, costPrice: 600.00, quantity: 8, unit: 'قطعة' },
-    { id: 4, name: 'لابتوب Dell XPS 13', category: 'أجهزة', sellPrice: 3500.00, costPrice: 2800.00, quantity: 5, unit: 'قطعة' },
-    { id: 5, name: 'سماعات رأس Sony', category: 'ملحقات', sellPrice: 200.00, costPrice: 150.00, quantity: 20, unit: 'قطعة' },
-    { id: 6, name: 'طابعة HP LaserJet', category: 'أجهزة', sellPrice: 450.00, costPrice: 350.00, quantity: 12, unit: 'قطعة' },
+    { id: 1, code: '001', name: 'ماوس لاسلكي Logitech M185', category: 'ملحقات', sellPrice: 50.00, costPrice: 150.00, quantity: 15, unit: 'قطعة' },
+    { id: 2, code: '002', name: 'كيبورد ميكانيكي Redragon', category: 'ملحقات', sellPrice: 120.00, costPrice: 80.00, quantity: 10, unit: 'قطعة' },
+    { id: 3, code: '003', name: 'شاشة سامسونج 27 بوصة', category: 'أجهزة', sellPrice: 800.00, costPrice: 600.00, quantity: 8, unit: 'قطعة' },
+    { id: 4, code: '004', name: 'لابتوب Dell XPS 13', category: 'أجهزة', sellPrice: 3500.00, costPrice: 2800.00, quantity: 5, unit: 'قطعة' },
+    { id: 5, code: '005', name: 'سماعات رأس Sony', category: 'ملحقات', sellPrice: 200.00, costPrice: 150.00, quantity: 20, unit: 'قطعة' },
+    { id: 6, code: '006', name: 'طابعة HP LaserJet', category: 'أجهزة', sellPrice: 450.00, costPrice: 350.00, quantity: 12, unit: 'قطعة' },
   ])
 
   const menuItems = [
@@ -75,8 +77,17 @@ function Categories({ onLogout }: { onLogout: () => void }) {
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault()
     const newId = Math.max(...products.map(p => p.id), 0) + 1
+    
+    // Auto-generate code if not provided
+    let code = productCode
+    if (!code.trim()) {
+      const maxCode = Math.max(...products.map(p => parseInt(p.code) || 0), 0)
+      code = String(maxCode + 1).padStart(3, '0')
+    }
+    
     const newProduct: Product = {
       id: newId,
+      code: code,
       name: productName,
       category: category,
       sellPrice: parseFloat(sellPrice),
@@ -94,7 +105,7 @@ function Categories({ onLogout }: { onLogout: () => void }) {
     if (selectedProduct) {
       const updatedProducts = products.map(p => 
         p.id === selectedProduct.id 
-          ? { ...p, name: productName, category, sellPrice: parseFloat(sellPrice), costPrice: parseFloat(costPrice), quantity: parseInt(quantity), unit }
+          ? { ...p, code: productCode, name: productName, category, sellPrice: parseFloat(sellPrice), costPrice: parseFloat(costPrice), quantity: parseInt(quantity), unit }
           : p
       )
       setProducts(updatedProducts)
@@ -114,6 +125,7 @@ function Categories({ onLogout }: { onLogout: () => void }) {
 
   const resetForm = () => {
     setProductName('')
+    setProductCode('')
     setCategory('')
     setSellPrice('')
     setCostPrice('')
@@ -123,6 +135,7 @@ function Categories({ onLogout }: { onLogout: () => void }) {
 
   const openEditModal = (product: Product) => {
     setSelectedProduct(product)
+    setProductCode(product.code)
     setProductName(product.name)
     setCategory(product.category)
     setSellPrice(product.sellPrice.toString())
@@ -239,6 +252,7 @@ function Categories({ onLogout }: { onLogout: () => void }) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">الاجراءات</th>
+                <th className="py-4 px-4 text-right text-gray-600 font-medium">الكود</th>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">اسم الصنف</th>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">الكمية</th>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">سعر التكلفة</th>
@@ -266,10 +280,11 @@ function Categories({ onLogout }: { onLogout: () => void }) {
                       </button>
                     </div>
                   </td>
+                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{product.code}</td>
                   <td className="py-4 px-4 text-right text-gray-800 font-medium">{product.name}</td>
                   <td className="py-4 px-4 text-right text-gray-600">{product.quantity}</td>
-                  <td className="py-4 px-4 text-right text-gray-600">{product.costPrice.toFixed(2)} ر.س</td>
-                  <td className="py-4 px-4 text-right text-gray-600">{product.sellPrice.toFixed(2)} ر.س</td>
+                  <td className="py-4 px-4 text-right text-gray-600">{product.costPrice.toFixed(2)} ج</td>
+                  <td className="py-4 px-4 text-right text-gray-600">{product.sellPrice.toFixed(2)} ج</td>
                   <td className="py-4 px-4 text-right text-gray-600">{product.category}</td>
                   <td className="py-4 px-4 text-right text-gray-600">{product.unit}</td>
                 </tr>
@@ -294,15 +309,27 @@ function Categories({ onLogout }: { onLogout: () => void }) {
             </div>
             
             <form onSubmit={handleAddProduct}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">اسم الصنف</label>
-                <input
-                  type="text"
-                  value={productName}
-                  onChange={(e) => setProductName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الكود</label>
+                  <input
+                    type="text"
+                    value={productCode}
+                    onChange={(e) => setProductCode(e.target.value)}
+                    placeholder="يولد تلقائياً"
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم الصنف</label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="mb-4">
@@ -416,15 +443,27 @@ function Categories({ onLogout }: { onLogout: () => void }) {
             </div>
             
             <form onSubmit={handleEditProduct}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">اسم الصنف</label>
-                <input
-                  type="text"
-                  value={productName}
-                  onChange={(e) => setProductName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الكود</label>
+                  <input
+                    type="text"
+                    value={productCode}
+                    onChange={(e) => setProductCode(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم الصنف</label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="mb-4">

@@ -357,12 +357,6 @@ function ReceiptVouchers({ onLogout }: { onLogout: () => void }) {
                       >
                         <Trash2 size={18} />
                       </button>
-                      <button 
-                        onClick={() => openEditModal(voucher)}
-                        className="text-[#0e7eb5] hover:text-[#0a6a99]"
-                      >
-                        <Pencil size={18} />
-                      </button>
                     </div>
                   </td>
                   <td className="py-4 px-3 text-right text-gray-600 text-sm">{voucher.description}</td>

@@ -1,6 +1,21 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts'
+import { 
   Search, 
   Plus, 
   Trash2, 
@@ -252,24 +267,27 @@ function Reports({ onLogout }: { onLogout: () => void }) {
       {/* Sales Chart */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h3 className="text-lg font-bold text-center mb-4">المبيعات اليومية (آخر 7 أيام)</h3>
-        <div className="h-64 flex items-end justify-center gap-4">
-          {[
-            { day: 'فبر 10', value: 15 },
-            { day: 'فبر 11', value: 0 },
-            { day: 'فبر 12', value: 0 },
-            { day: 'فبر 13', value: 50 },
-            { day: 'فبر 14', value: 75 },
-            { day: 'فبر 15', value: 260 },
-            { day: 'فبر 16', value: 0 },
-          ].map((item, index) => (
-            <div key={index} className="flex flex-col items-center gap-2">
-              <div 
-                className="w-8 bg-[#0e7eb5] rounded-t" 
-                style={{ height: `${item.value * 1.5}px` }}
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={[
+              { day: 'فبر 10', sales: 15000 },
+              { day: 'فبر 11', sales: 8500 },
+              { day: 'فبر 12', sales: 12000 },
+              { day: 'فبر 13', sales: 25000 },
+              { day: 'فبر 14', sales: 32000 },
+              { day: 'فبر 15', sales: 28000 },
+              { day: 'فبر 16', sales: 19500 },
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="day" tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${value.toLocaleString()}`} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toLocaleString()} ج`, 'المبيعات']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
               />
-              <span className="text-xs text-gray-600">{item.day}</span>
-            </div>
-          ))}
+              <Bar dataKey="sales" fill="#0e7eb5" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
         <div className="flex justify-center mt-4 gap-4 text-sm">
           <span className="flex items-center gap-2">
@@ -333,24 +351,27 @@ function Reports({ onLogout }: { onLogout: () => void }) {
       {/* Purchases Chart */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h3 className="text-lg font-bold text-center mb-4">المشتريات اليومية (آخر 7 أيام)</h3>
-        <div className="h-64 flex items-end justify-center gap-4">
-          {[
-            { day: 'فبر 10', value: 180 },
-            { day: 'فبر 11', value: 0 },
-            { day: 'فبر 12', value: 0 },
-            { day: 'فبر 13', value: 30 },
-            { day: 'فبر 14', value: 0 },
-            { day: 'فبر 15', value: 0 },
-            { day: 'فبر 16', value: 0 },
-          ].map((item, index) => (
-            <div key={index} className="flex flex-col items-center gap-2">
-              <div 
-                className="w-8 bg-purple-500 rounded-t" 
-                style={{ height: `${item.value * 1.5}px` }}
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={[
+              { day: 'فبر 10', purchases: 18000 },
+              { day: 'فبر 11', purchases: 12000 },
+              { day: 'فبر 12', purchases: 8500 },
+              { day: 'فبر 13', purchases: 25000 },
+              { day: 'فبر 14', purchases: 15000 },
+              { day: 'فبر 15', purchases: 22000 },
+              { day: 'فبر 16', purchases: 19500 },
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="day" tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${value.toLocaleString()}`} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toLocaleString()} ج`, 'المشتريات']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
               />
-              <span className="text-xs text-gray-600">{item.day}</span>
-            </div>
-          ))}
+              <Bar dataKey="purchases" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
         <div className="flex justify-center mt-4 gap-4 text-sm">
           <span className="flex items-center gap-2">
@@ -411,19 +432,28 @@ function Reports({ onLogout }: { onLogout: () => void }) {
       {/* Top Customers Chart */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h3 className="text-lg font-bold text-center mb-4">مقارنة مشتريات العملاء</h3>
-        <div className="space-y-4">
-          {topCustomersData.map((customer) => (
-            <div key={customer.rank} className="flex items-center gap-4">
-              <span className="text-[#0e7eb5] font-medium w-32 text-right text-sm">{customer.name}</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-8 overflow-hidden">
-                <div 
-                  className="bg-[#0e7eb5] h-full rounded-full" 
-                  style={{ width: `${(customer.totalSpent / 60000) * 100}%` }}
-                />
-              </div>
-              <span className="text-gray-600 text-sm w-16">{customer.totalSpent.toLocaleString()} ج</span>
-            </div>
-          ))}
+        <div className="h-64" style={{ minHeight: '250px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={[
+                { name: 'أحمد محمد', purchases: 52000 },
+                { name: 'أحمد علي', purchases: 52000 },
+                { name: 'سارة أحمد', purchases: 52000 },
+                { name: 'محمود عبدالله', purchases: 52000 },
+                { name: 'هاجر أحمد', purchases: 52000 },
+              ]}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} interval={0} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${value.toLocaleString()}`} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toLocaleString()} ج`, 'المشتريات']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+              />
+              <Bar dataKey="purchases" fill="#0e7eb5" radius={[4, 4, 0, 0]} maxBarSize={50} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -482,19 +512,28 @@ function Reports({ onLogout }: { onLogout: () => void }) {
       {/* Top Products Chart */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h3 className="text-lg font-bold text-center mb-4">مقارنة إيرادات المنتجات</h3>
-        <div className="space-y-4">
-          {topProductsData.map((product) => (
-            <div key={product.rank} className="flex items-center gap-4">
-              <span className="text-[#0e7eb5] font-medium w-32 text-right text-sm">{product.name}</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-8 overflow-hidden">
-                <div 
-                  className="bg-emerald-500 h-full rounded-full" 
-                  style={{ width: `${(product.revenue / 26000) * 100}%` }}
-                />
-              </div>
-              <span className="text-gray-600 text-sm w-16">{product.revenue.toLocaleString()} ج</span>
-            </div>
-          ))}
+        <div className="h-64" style={{ minHeight: '250px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={[
+                { name: 'لابتوب Dell', revenue: 25000 },
+                { name: 'شاشة Samsung', revenue: 25000 },
+                { name: 'طابعة HP', revenue: 25000 },
+                { name: 'كيبورد Logitech', revenue: 25000 },
+                { name: 'ماوس Logitech', revenue: 25000 },
+              ]}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} interval={0} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${value.toLocaleString()}`} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toLocaleString()} ج`, 'الإيرادات']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+              />
+              <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -557,47 +596,52 @@ function Reports({ onLogout }: { onLogout: () => void }) {
       {/* Profit Trend Chart */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h3 className="text-lg font-bold text-center mb-4">تطور الربح الشهري</h3>
-        <div className="h-48 relative">
-          <svg viewBox="0 0 400 150" className="w-full h-full">
-            <line x1="20" y1="20" x2="380" y2="130" stroke="#10b981" strokeWidth="2" />
-            <circle cx="20" cy="20" r="4" fill="#10b981" />
-            <circle cx="380" cy="130" r="4" fill="#10b981" />
-            <text x="30" y="15" className="text-xs fill-gray-600">85000</text>
-            <text x="350" y="145" className="text-xs fill-gray-600">26500</text>
-            <text x="10" y="140" className="text-xs fill-gray-600">يناير</text>
-            <text x="360" y="140" className="text-xs fill-gray-600">فبراير</text>
-          </svg>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={[
+              { month: 'يناير', profit: 85000 },
+              { month: 'فبراير', profit: 245700 },
+              { month: 'مارس', profit: 120000 },
+              { month: 'أبريل', profit: 180000 },
+              { month: 'مايو', profit: 220000 },
+              { month: 'يونيو', profit: 195000 },
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${value.toLocaleString()}`} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toLocaleString()} ج`, 'صافي الربح']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+              />
+              <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
       {/* Revenue vs Expenses Chart */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h3 className="text-lg font-bold text-center mb-4">مقارنة الإيرادات والتكاليف</h3>
-        <div className="h-48 flex items-end justify-center gap-16">
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex gap-4 items-end">
-              <div className="w-16 bg-emerald-500 rounded-t" style={{ height: '40px' }} />
-              <div className="w-16 bg-red-500 rounded-t" style={{ height: '40px' }} />
-            </div>
-            <span className="text-xs text-gray-600">يناير</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex gap-4 items-end">
-              <div className="w-16 bg-emerald-500 rounded-t" style={{ height: '30px' }} />
-              <div className="w-16 bg-red-500 rounded-t" style={{ height: '200px' }} />
-            </div>
-            <span className="text-xs text-gray-600">فبراير</span>
-          </div>
-        </div>
-        <div className="flex justify-center mt-4 gap-4 text-sm">
-          <span className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-500 rounded"></span>
-            التكاليف
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-emerald-500 rounded"></span>
-            الإيرادات
-          </span>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={[
+              { month: 'يناير', revenue: 350000, expenses: 280000 },
+              { month: 'فبراير', revenue: 403000, expenses: 286000 },
+              { month: 'مارس', revenue: 380000, expenses: 260000 },
+              { month: 'أبريل', revenue: 420000, expenses: 290000 },
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${value.toLocaleString()}`} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toLocaleString()} ج`, '']}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+              />
+              <Legend />
+              <Bar dataKey="revenue" name="الإيرادات" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expenses" name="التكاليف" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
