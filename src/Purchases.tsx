@@ -4,7 +4,6 @@ import {
   Search, 
   Plus, 
   Trash2, 
-  Pencil, 
   X, 
   Home,
   Package,
@@ -17,8 +16,11 @@ import {
   Box,
   ChevronDown,
   ChevronUp,
-  Store
+  Store,
+  Eye,
+  LogOut
 } from 'lucide-react'
+import { useAuth } from './AuthContext'
 
 interface InvoiceItem {
   id: number
@@ -53,18 +55,39 @@ interface PurchaseReturn {
   items: InvoiceItem[]
 }
 
-function Purchases({ onLogout }: { onLogout: () => void }) {
+function Purchases() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const location = useLocation()
   const isReturnsPage = location.pathname.includes('/returns')
   
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false)
+  const [newInvoiceNumber, setNewInvoiceNumber] = useState('')
+  
+  // Add Invoice form states
+  const [selectedSupplier, setSelectedSupplier] = useState('')
+  const [itemName, setItemName] = useState('')
+  const [itemQuantity, setItemQuantity] = useState('')
+  const [purchasePrice, setPurchasePrice] = useState('')
+  const [sellPrice, setSellPrice] = useState('')
+  const [invoiceItems, setInvoiceItems] = useState<any[]>([])
+  const [newInvoiceDate] = useState('13-4-2026')
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<PurchaseInvoice | null>(null)
   const [selectedReturn, setSelectedReturn] = useState<PurchaseReturn | null>(null)
-  const [expandedSidebar, setExpandedSidebar] = useState(true)
+  const [openDropdown, setOpenDropdown] = useState<string | null>('المشتريات')
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const toggleDropdown = (label: string) => {
+    setOpenDropdown((prev) => prev === label ? null : label)
+  }
   
   // Form states for edit modal
   const [invoiceNumber, setInvoiceNumber] = useState('')
@@ -292,6 +315,60 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
     setStatus('paid')
   }
 
+  const openAddModal = () => {
+    // Generate next invoice number
+    const maxNum = Math.max(...invoices.map(inv => {
+      const match = inv.invoiceNumber.match(/INV-2026-(\d+)/)
+      return match ? parseInt(match[1]) : 0
+    }), 0)
+    const nextNum = String(maxNum + 1).padStart(3, '0')
+    setNewInvoiceNumber(`INV-2026-${nextNum}`)
+    setSelectedSupplier('')
+    setItemName('')
+    setItemQuantity('')
+    setPurchasePrice('')
+    setSellPrice('')
+    setInvoiceItems([])
+    setShowInvoicePreview(false)
+    setShowAddModal(true)
+  }
+
+  const addItemToInvoice = () => {
+    if (!itemName || !itemQuantity || !purchasePrice) return
+    
+    const qty = parseInt(itemQuantity) || 1
+    const pPrice = parseFloat(purchasePrice) || 0
+    const sPrice = parseFloat(sellPrice) || 0
+    const total = pPrice * qty
+    
+    const newItem = {
+      id: Date.now(),
+      productName: itemName,
+      quantity: qty,
+      purchasePrice: pPrice,
+      sellPrice: sPrice,
+      total: total
+    }
+    
+    setInvoiceItems([...invoiceItems, newItem])
+    setItemName('')
+    setItemQuantity('')
+    setPurchasePrice('')
+    setSellPrice('')
+  }
+
+  const removeInvoiceItem = (itemId: number) => {
+    setInvoiceItems(invoiceItems.filter(item => item.id !== itemId))
+  }
+
+  const calculateInvoiceTotal = () => {
+    return invoiceItems.reduce((sum, item) => sum + item.total, 0)
+  }
+
+  const handleSaveInvoice = () => {
+    setShowInvoicePreview(true)
+  }
+
   const openEditModal = (invoice: PurchaseInvoice) => {
     setSelectedInvoice(invoice)
     setInvoiceNumber(invoice.invoiceNumber)
@@ -357,47 +434,68 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
       {/* Right Sidebar */}
       <aside className="w-64 bg-sky-100 min-h-screen p-4">
         <div className="space-y-2">
-          {menuItems.map((item, index) => (
-            <div key={index}>
-              <button
-                onClick={() => {
-                  if (item.path) {
-                    navigate(item.path)
-                  }
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right transition-colors ${
-                  item.active 
-                    ? 'bg-[#0e7eb5] text-white' 
-                    : 'text-[#0e7eb5] hover:bg-sky-200'
-                }`}
-              >
-                <span className="flex-1">{item.label}</span>
-                {item.subItems ? (
-                  expandedSidebar ? <ChevronUp size={20} /> : <ChevronDown size={20} />
-                ) : (
-                  <item.icon size={20} />
+          {menuItems.map((item, index) => {
+            const isOpen = openDropdown === item.label
+            return (
+              <div key={index}>
+                <button
+                  onClick={() => {
+                    if (item.subItems) {
+                      toggleDropdown(item.label)
+                      // Navigate to first sub-item by default
+                      if (item.subItems[0]?.path) {
+                        navigate(item.subItems[0].path)
+                      }
+                    } else if (item.path) {
+                      navigate(item.path)
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right transition-colors ${
+                    item.active 
+                      ? 'bg-[#0e7eb5] text-white' 
+                      : 'text-[#0e7eb5] hover:bg-sky-200'
+                  }`}
+                >
+                  <span className="flex-1">{item.label}</span>
+                  {item.subItems ? (
+                    <>
+                      <item.icon size={20} />
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </>
+                  ) : (
+                    <item.icon size={20} />
+                  )}
+                </button>
+                {item.subItems && isOpen && (
+                  <div className="mr-4 mt-1 space-y-1">
+                    {item.subItems.map((sub, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => sub.path && navigate(sub.path)}
+                        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-right text-sm transition-colors ${
+                          sub.active 
+                            ? 'bg-[#0e7eb5]/20 text-[#0e7eb5]' 
+                            : 'text-gray-600 hover:bg-sky-200'
+                        }`}
+                      >
+                        <span className="flex-1">{sub.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </button>
-              {item.subItems && expandedSidebar && (
-                <div className="mr-4 mt-1 space-y-1">
-                  {item.subItems.map((sub, subIndex) => (
-                    <button
-                      key={subIndex}
-                      onClick={() => sub.path && navigate(sub.path)}
-                      className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-right text-sm transition-colors ${
-                        sub.active 
-                          ? 'bg-[#0e7eb5]/20 text-[#0e7eb5]' 
-                          : 'text-gray-600 hover:bg-sky-200'
-                      }`}
-                    >
-                      <span className="flex-1">{sub.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
+        
+        {/* Logout Button */}
+        <button 
+          onClick={handleLogout}
+          className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors bg-red-500 text-white hover:bg-red-600"
+        >
+          <span className="font-medium">تسجيل خروج</span>
+          <LogOut size={20} />
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -430,7 +528,7 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
                 <p className="text-gray-400">إدارة فواتير الشراء والموردين</p>
               </div>
               <button 
-                onClick={() => setShowAddModal(true)}
+                onClick={openAddModal}
                 className="bg-[#0e7eb5] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0a6a99] transition-colors"
               >
                 <Plus size={20} />
@@ -503,7 +601,7 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
                             onClick={() => openEditModal(invoice)}
                             className="text-[#0e7eb5] hover:text-[#0a6a99]"
                           >
-                            <Pencil size={18} />
+                            <Eye size={18} />
                           </button>
                         </div>
                       </td>
@@ -600,7 +698,7 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
                             onClick={() => openReturnEditModal(ret)}
                             className="text-[#0e7eb5] hover:text-[#0a6a99]"
                           >
-                            <Pencil size={18} />
+                            <Eye size={18} />
                           </button>
                         </div>
                       </td>
@@ -620,10 +718,10 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
         )}
       </main>
 
-      {/* Add Modal */}
-      {showAddModal && (
+      {/* Add Invoice Modal - Create Form Step */}
+      {showAddModal && !showInvoicePreview && !isReturnsPage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <button 
                 onClick={() => setShowAddModal(false)}
@@ -631,113 +729,330 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
               >
                 <X size={24} />
               </button>
-              <h3 className="text-xl font-bold text-[#0e7eb5]">
-                {isReturnsPage ? 'إضافة مرتجع جديد' : 'إنشاء فاتورة جديده'}
-              </h3>
+              <h3 className="text-xl font-bold text-[#0e7eb5]">انشاء فاتوره جديده</h3>
             </div>
             
-            <form onSubmit={(e) => { e.preventDefault(); setShowAddModal(false); }}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">
-                  {isReturnsPage ? 'رقم المرتجع' : 'رقم الفاتورة'}
-                </label>
-                <input
-                  type="text"
+            <div className="space-y-4">
+              {/* Supplier Selection */}
+              <div>
+                <label className="block text-gray-700 text-sm mb-2 text-right">اسم المورد</label>
+                <select 
+                  value={selectedSupplier}
+                  onChange={(e) => setSelectedSupplier(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  placeholder={isReturnsPage ? 'RET-2026-XXX' : 'INV-2026-XXX'}
-                />
+                >
+                  <option value="">اختر المورد</option>
+                  <option value="1">أحمد محمد</option>
+                  <option value="2">محمد محمود</option>
+                  <option value="3">علي أحمد</option>
+                </select>
               </div>
 
-              {!isReturnsPage && (
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم المورد</label>
-                  <select className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]">
-                    <option value="">اختر المورد</option>
-                    <option value="1">أحمد محمد</option>
-                    <option value="2">محمد محمود</option>
-                    <option value="3">علي أحمد</option>
-                  </select>
-                </div>
-              )}
-
-              {isReturnsPage && (
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm mb-2 text-right">الفاتوره الاصليه</label>
+              {/* Item and Quantity */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الكمية</label>
                   <input
-                    type="text"
+                    type="number"
+                    value={itemQuantity}
+                    onChange={(e) => setItemQuantity(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    placeholder="INV-2026-XXX"
+                    placeholder="الكمية"
                   />
                 </div>
-              )}
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الصنف</label>
+                  <input
+                    type="text"
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    placeholder="اسم الصنف"
+                  />
+                </div>
+              </div>
 
-              {/* Products Table */}
-              <div className="bg-gray-50 rounded-xl overflow-hidden mb-4">
+              {/* Purchase and Sell Price */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">سعر البيع</label>
+                  <input
+                    type="number"
+                    value={sellPrice}
+                    onChange={(e) => setSellPrice(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    placeholder="سعر البيع"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">سعر الشراء</label>
+                  <input
+                    type="number"
+                    value={purchasePrice}
+                    onChange={(e) => setPurchasePrice(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    placeholder="سعر الشراء"
+                  />
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="bg-gray-50 rounded-xl overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الإجمالي</th>
+                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">حذف</th>
                       <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">السعر</th>
                       <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الكمية</th>
-                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">الصنف</th>
+                      <th className="py-2 px-3 text-right text-gray-600 font-medium text-sm">اسم الصنف</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-t border-gray-200">
-                      <td className="py-2 px-3 text-right">25,700 ج</td>
-                      <td className="py-2 px-3 text-right">25,700 ج</td>
-                      <td className="py-2 px-3 text-right">1</td>
-                      <td className="py-2 px-3 text-right">لابتوب Dell XPS 13</td>
-                    </tr>
+                    {invoiceItems.length === 0 ? (
+                      <tr className="border-t border-gray-200">
+                        <td colSpan={4} className="py-4 px-3 text-center text-gray-400 text-sm">
+                          لا توجد أصناف مضافة
+                        </td>
+                      </tr>
+                    ) : (
+                      invoiceItems.map((item) => (
+                        <tr key={item.id} className="border-t border-gray-200">
+                          <td className="py-2 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeInvoiceItem(item.id)}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                          <td className="py-2 px-3 text-right">{item.purchasePrice.toFixed(2)}</td>
+                          <td className="py-2 px-3 text-right">{item.quantity}</td>
+                          <td className="py-2 px-3 text-right">{item.productName}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              <button
-                type="button"
-                className="w-full bg-[#0e7eb5] text-white py-2 rounded-lg font-bold mb-6 hover:bg-[#0a6a99] transition-colors"
-              >
-                {isReturnsPage ? 'بيع بسعر الجملة' : 'إضافة صنف'}
-              </button>
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 bg-gray-300 text-white py-3 rounded-lg font-bold hover:bg-gray-400 transition-colors"
+                >
+                  الغاء
+                </button>
+                <button
+                  type="button"
+                  onClick={addItemToInvoice}
+                  disabled={!itemName || !itemQuantity || !purchasePrice}
+                  className={`flex-1 py-3 rounded-lg font-bold transition-colors ${
+                    itemName && itemQuantity && purchasePrice
+                      ? 'bg-[#0e7eb5] text-white hover:bg-[#0a6a99]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  اضافه
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveInvoice}
+                  disabled={invoiceItems.length === 0}
+                  className={`flex-1 py-3 rounded-lg font-bold transition-colors ${
+                    invoiceItems.length > 0
+                      ? 'bg-[#0e7eb5] text-white hover:bg-[#0a6a99]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  حفظ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Summary */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-right">
-                    <p className="text-gray-600 text-sm mb-1">الإجمالي قبل الخصم</p>
-                    <p className="text-xl font-bold text-[#0e7eb5]">1000 ج</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-600 text-sm mb-1">
-                      {isReturnsPage ? 'سلة المرتجع' : 'سلة الشراء'}
-                    </p>
-                    <p className="text-gray-800">أحمد محمد</p>
-                  </div>
+      {/* Add Invoice Modal - Preview Step */}
+      {showAddModal && showInvoicePreview && !isReturnsPage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <button 
+                onClick={() => setShowInvoicePreview(false)}
+                className="text-[#0e7eb5] hover:text-[#0a6a99]"
+              >
+                <X size={24} />
+              </button>
+              <h3 className="text-xl font-bold text-[#0e7eb5]">عرض الفاتورة</h3>
+            </div>
+            
+            {/* Invoice Header Info */}
+            <div className="flex items-center justify-end gap-8 mb-6 text-right">
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">اسم العميل</span>
+                <span className="font-bold text-gray-800">
+                  {selectedSupplier === '1' ? 'أحمد محمد' : selectedSupplier === '2' ? 'محمد محمود' : selectedSupplier === '3' ? 'علي أحمد' : ''}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">عدد الاصناف</span>
+                <span className="font-bold text-gray-800">{invoiceItems.length}</span>
+              </div>
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">التاريخ</span>
+                <span className="font-bold text-gray-800">{newInvoiceDate}</span>
+              </div>
+              <div>
+                <span className="text-gray-600 text-sm block mb-1">رقم الفاتورة</span>
+                <span className="font-bold text-gray-800">{newInvoiceNumber}</span>
+              </div>
+            </div>
+
+            {/* Items Table */}
+            <div className="bg-gray-50 rounded-xl overflow-hidden mb-6">
+              <table className="w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الاجمالي</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر البيع</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر الشراء</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكمية</th>
+                    <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">اسم الصنف</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoiceItems.map((item) => (
+                    <tr key={item.id} className="border-t border-gray-200">
+                      <td className="py-3 px-4 text-right font-medium">{item.total.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right">{item.sellPrice.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right">{item.purchasePrice.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right">{item.quantity}</td>
+                      <td className="py-3 px-4 text-right">{item.productName}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Summary Footer */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div className="flex gap-8 text-right">
+                <div>
+                  <span className="text-gray-600 text-sm block">الاجمالي</span>
+                  <span className="font-bold text-amber-500">{calculateInvoiceTotal().toLocaleString()} ج</span>
                 </div>
-                {!isReturnsPage && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-right">
-                      <p className="text-gray-600 text-sm mb-1">طريقة الدفع</p>
-                      <select className="w-full border border-gray-200 rounded-lg py-2 px-3 text-right">
-                        <option value="cash">نقدي</option>
-                        <option value="card">بطاقة</option>
-                        <option value="credit">آجل</option>
-                      </select>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-gray-600 text-sm mb-1">أحمد محمد</p>
-                      <p className="text-gray-800">المسؤول</p>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <span className="text-gray-600 text-sm block">المدفوع</span>
+                  <span className="font-bold text-[#0e7eb5]">20,000 ج</span>
+                </div>
+                <div>
+                  <span className="text-gray-600 text-sm block">المتبقي</span>
+                  <span className="font-bold text-amber-500">5,700 ج</span>
+                </div>
+                <div>
+                  <span className="text-gray-600 text-sm block">طريقة الدفع</span>
+                  <span className="font-bold">نقدي</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Return Modal - for Purchase Returns page */}
+      {showAddModal && isReturnsPage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="text-[#0e7eb5] hover:text-[#0a6a99]"
+              >
+                <X size={24} />
+              </button>
+              <h3 className="text-xl font-bold text-[#0e7eb5]">إضافة مرتجع جديد</h3>
+            </div>
+            
+            <form onSubmit={(e) => { e.preventDefault(); setShowAddModal(false); }}>
+              {/* Return Number */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm mb-2 text-right">رقم المرتجع</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                  placeholder=""
+                />
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-[#0e7eb5] text-white py-3 rounded-xl font-bold hover:bg-[#0a6a99] transition-colors"
-              >
-                {isReturnsPage ? 'إتمام المرتجع' : 'إتمام الشراء'}
-              </button>
+              {/* Original Invoice */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm mb-2 text-right">الفاتوره الاصليه</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                  placeholder=""
+                />
+              </div>
+
+              {/* Date and Item Count */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">التاريخ</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    placeholder=""
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">عدد الاصناف</label>
+                  <input
+                    type="number"
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    placeholder=""
+                  />
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm mb-2 text-right">الاجمالي</label>
+                <input
+                  type="number"
+                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                  placeholder=""
+                />
+              </div>
+
+              {/* Reason */}
+              <div className="mb-6">
+                <label className="block text-gray-700 text-sm mb-2 text-right">السبب</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                  placeholder=""
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 bg-gray-300 text-white py-3 rounded-lg font-bold hover:bg-gray-400 transition-colors"
+                >
+                  الغاء
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-[#0e7eb5] text-white py-3 rounded-lg font-bold hover:bg-[#0a6a99] transition-colors"
+                >
+                  اضافة
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -746,7 +1061,7 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md mx-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <button 
                 onClick={() => setShowEditModal(false)}
@@ -755,120 +1070,154 @@ function Purchases({ onLogout }: { onLogout: () => void }) {
                 <X size={24} />
               </button>
               <h3 className="text-xl font-bold text-[#0e7eb5]">
-                {isReturnsPage ? 'تعديل مرتجع' : 'تعديل بيانات الفاتوره'}
+                {isReturnsPage ? 'عرض مرتجع' : 'عرض الفاتوره'}
               </h3>
             </div>
             
             <form onSubmit={isReturnsPage ? (e) => { e.preventDefault(); setShowEditModal(false); } : handleEditInvoice}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">
-                  {isReturnsPage ? 'رقم المرتجع' : 'رقم الفاتوره'}
-                </label>
-                <input
-                  type="text"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
-              </div>
+              {!isReturnsPage && (
+                <>
+                  {/* Invoice Header Info */}
+                  <div className="flex items-center justify-end gap-6 mb-6 text-right">
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">اسم العميل</span>
+                      <span className="font-bold text-gray-800">{supplierName}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">عدد الاصناف</span>
+                      <span className="font-bold text-gray-800">{itemCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">التاريخ</span>
+                      <span className="font-bold text-gray-800">{invoiceDate}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">رقم الفاتورة</span>
+                      <span className="font-bold text-gray-800">{invoiceNumber}</span>
+                    </div>
+                  </div>
+
+                  {/* Items Table */}
+                  <div className="bg-gray-50 rounded-xl overflow-hidden mb-6">
+                    <table className="w-full">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الاجمالي</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر البيع</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر الشراء</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكمية</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">اسم الصنف</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedInvoice?.items?.map((item: any) => (
+                          <tr key={item.id} className="border-t border-gray-200">
+                            <td className="py-3 px-4 text-right font-medium">{item.total.toLocaleString()}</td>
+                            <td className="py-3 px-4 text-right">{(item.unitPrice * 1.2).toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right">{item.unitPrice.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right">{item.quantity}</td>
+                            <td className="py-3 px-4 text-right">{item.productName}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Summary Footer */}
+                  <div className="flex items-center justify-end gap-8 pt-4 border-t border-gray-200">
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">طريقة الدفع</span>
+                      <span className="font-bold">نقدي</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">المتبقي</span>
+                      <span className="font-bold text-amber-500">{parseInt(remainingAmount).toLocaleString()} ج</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">المدفوع</span>
+                      <span className="font-bold text-[#0e7eb5]">{parseInt(paidAmount).toLocaleString()} ج</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">الاجمالي</span>
+                      <span className="font-bold text-amber-500">{parseInt(totalAmount).toLocaleString()} ج</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {isReturnsPage && (
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm mb-2 text-right">الفاتوره الاصليه</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    placeholder="INV-2026-XXX"
-                  />
-                </div>
-              )}
+                <>
+                  {/* Return Header Info */}
+                  <div className="flex items-center justify-end gap-6 mb-6 text-right">
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">السبب</span>
+                      <span className="font-bold text-gray-800">{selectedReturn?.reason || 'عيب في المنتج'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">عدد الاصناف</span>
+                      <span className="font-bold text-gray-800">{selectedReturn?.itemCount || '4'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">التاريخ</span>
+                      <span className="font-bold text-gray-800">{selectedReturn?.date || '13-2-2026'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">رقم المرتجع</span>
+                      <span className="font-bold text-gray-800">{selectedReturn?.returnNumber || 'RET-2026-001'}</span>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">عدد الاصناف</label>
-                  <input
-                    type="number"
-                    value={itemCount}
-                    onChange={(e) => setItemCount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">التاريخ</label>
-                  <input
-                    type="text"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-              </div>
+                  {/* Items Table */}
+                  <div className="bg-gray-50 rounded-xl overflow-hidden mb-6">
+                    <table className="w-full">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الاجمالي</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر البيع</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">سعر الشراء</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">الكمية</th>
+                          <th className="py-3 px-4 text-right text-gray-600 font-medium text-sm">اسم الصنف</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedReturn?.items?.map((item: any) => (
+                          <tr key={item.id} className="border-t border-gray-200">
+                            <td className="py-3 px-4 text-right font-medium">{item.total.toLocaleString()}</td>
+                            <td className="py-3 px-4 text-right">{(item.unitPrice * 1.2).toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right">{item.unitPrice.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right">{item.quantity}</td>
+                            <td className="py-3 px-4 text-right">{item.productName}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-              {!isReturnsPage && (
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم المورد</label>
-                  <input
-                    type="text"
-                    value={supplierName}
-                    onChange={(e) => setSupplierName(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">{isReturnsPage ? 'الإجمالي' : 'المدفوع'}</label>
-                  <input
-                    type="number"
-                    value={isReturnsPage ? totalAmount : paidAmount}
-                    onChange={(e) => isReturnsPage ? setTotalAmount(e.target.value) : setPaidAmount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm mb-2 text-right">{isReturnsPage ? 'السبب' : 'الإجمالي'}</label>
-                  <input
-                    type={isReturnsPage ? "text" : "number"}
-                    value={isReturnsPage ? 'عيب في المنتج' : totalAmount}
-                    onChange={(e) => setTotalAmount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
-              </div>
-
-              {!isReturnsPage && (
-                <div className="mb-6">
-                  <label className="block text-gray-700 text-sm mb-2 text-right">المتبقي</label>
-                  <input
-                    type="number"
-                    value={remainingAmount}
-                    onChange={(e) => setRemainingAmount(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                    required
-                  />
-                </div>
+                  {/* Summary Footer */}
+                  <div className="flex items-center justify-end gap-8 pt-4 border-t border-gray-200">
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">طريقة الدفع</span>
+                      <span className="font-bold">نقدي</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">الفاتوره الاصليه</span>
+                      <span className="font-bold text-[#0e7eb5]">{selectedReturn?.originalInvoice || 'INV-2026-001'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-gray-600 text-sm block">الإجمالي</span>
+                      <span className="font-bold text-amber-500">{(selectedReturn?.total || 5700).toLocaleString()} ج</span>
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-300 transition-colors"
-                >
-                  الغاء
-                </button>
-                <button
-                  type="submit"
                   className="flex-1 bg-[#0e7eb5] text-white py-3 rounded-lg font-bold hover:bg-[#0a6a99] transition-colors"
                 >
-                  {isReturnsPage ? 'حفظ التعديلات' : 'حفظ'}
+                  اغلاق
                 </button>
               </div>
             </form>

@@ -17,11 +17,16 @@ import {
   Box,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  LogOut,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
+import { useAuth } from './AuthContext'
 
 interface Customer {
   id: number
+  code: string
   name: string
   phone: string
   email: string
@@ -29,36 +34,64 @@ interface Customer {
   balance: number
 }
 
-function Customers({ onLogout }: { onLogout: () => void }) {
+function Customers() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const toggleDropdown = (label: string) => {
+    setOpenDropdown((prev) => prev === label ? null : label)
+  }
   
   // Form states
   const [customerName, setCustomerName] = useState('')
+  const [customerCode, setCustomerCode] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [address, setAddress] = useState('')
   const [openingBalance, setOpeningBalance] = useState('')
 
   const [customers, setCustomers] = useState<Customer[]>([
-    { id: 1, name: 'أحمد محمد علي', phone: '01012345678', email: 'ahmed@email.com', address: 'القاهرة، مصر', balance: 1500.00 },
-    { id: 2, name: 'محمد محمود حسن', phone: '01123456789', email: 'mohamed@email.com', address: 'الإسكندرية، مصر', balance: 2300.50 },
-    { id: 3, name: 'علي أحمد عبدالله', phone: '01234567890', email: 'ali@email.com', address: 'الجيزة، مصر', balance: 800.00 },
-    { id: 4, name: 'محمود عبدالرحمن', phone: '01556789012', email: 'mahmoud@email.com', address: 'المنصورة، مصر', balance: 3200.75 },
-    { id: 5, name: 'سامي حسن علي', phone: '01098765432', email: 'sami@email.com', address: 'طنطا، مصر', balance: 500.00 },
-    { id: 6, name: 'خالد عمر محمود', phone: '01111223344', email: 'khaled@email.com', address: 'الزقازيق، مصر', balance: 1800.25 },
+    { id: 1, code: '001', name: 'أحمد محمد علي', phone: '01012345678', email: 'ahmed@email.com', address: 'القاهرة، مصر', balance: 1500.00 },
+    { id: 2, code: '002', name: 'محمد محمود حسن', phone: '01123456789', email: 'mohamed@email.com', address: 'الإسكندرية، مصر', balance: 2300.50 },
+    { id: 3, code: '003', name: 'علي أحمد عبدالله', phone: '01234567890', email: 'ali@email.com', address: 'الجيزة، مصر', balance: 800.00 },
+    { id: 4, code: '004', name: 'محمود عبدالرحمن', phone: '01556789012', email: 'mahmoud@email.com', address: 'المنصورة، مصر', balance: 3200.75 },
+    { id: 5, code: '005', name: 'سامي حسن علي', phone: '01098765432', email: 'sami@email.com', address: 'طنطا، مصر', balance: 500.00 },
+    { id: 6, code: '006', name: 'خالد عمر محمود', phone: '01111223344', email: 'khaled@email.com', address: 'الزقازيق، مصر', balance: 1800.25 },
   ])
 
   const menuItems = [
     { icon: Home, label: 'الصفحة الرئيسية', active: false, path: '/dashboard' },
     { icon: Package, label: 'الاصناف', active: false, path: '/categories' },
     { icon: Users, label: 'العملاء', active: true, path: '/customers' },
-    { icon: ShoppingCart, label: 'نقطة البيع', active: false, path: '/pos' },
-    { icon: Box, label: 'المشتريات', active: false, path: '/purchases' },
+    { 
+      icon: ShoppingCart, 
+      label: 'نقطة البيع', 
+      active: false,
+      subItems: [
+        { label: 'فواتير المبيعات', active: false, path: '/pos' },
+        { label: 'مرتجع المبيعات', active: false, path: '/pos/returns' },
+      ]
+    },
+    { 
+      icon: Box, 
+      label: 'المشتريات', 
+      active: false,
+      subItems: [
+        { label: 'فواتير المشتريات', active: false, path: '/purchases' },
+        { label: 'مرتجع المشتريات', active: false, path: '/purchases/returns' },
+      ]
+    },
     { icon: CreditCard, label: 'المصروفات', active: false, path: '/expenses' },
     { icon: FileText, label: 'إذونات القبض', active: false, path: '/receipts' },
     { icon: FileText, label: 'إذونات الصرف', active: false, path: '/payments' },
@@ -69,8 +102,17 @@ function Customers({ onLogout }: { onLogout: () => void }) {
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault()
     const newId = Math.max(...customers.map(c => c.id), 0) + 1
+    
+    // Auto-generate code if not provided
+    let code = customerCode
+    if (!code.trim()) {
+      const maxCode = Math.max(...customers.map(c => parseInt(c.code) || 0), 0)
+      code = String(maxCode + 1).padStart(3, '0')
+    }
+    
     const newCustomer: Customer = {
       id: newId,
+      code: code,
       name: customerName,
       phone: phone,
       email: email,
@@ -87,7 +129,7 @@ function Customers({ onLogout }: { onLogout: () => void }) {
     if (selectedCustomer) {
       const updatedCustomers = customers.map(c => 
         c.id === selectedCustomer.id 
-          ? { ...c, name: customerName, phone, email, address, balance: parseFloat(openingBalance) || c.balance }
+          ? { ...c, code: customerCode, name: customerName, phone, email, address, balance: parseFloat(openingBalance) || c.balance }
           : c
       )
       setCustomers(updatedCustomers)
@@ -107,6 +149,7 @@ function Customers({ onLogout }: { onLogout: () => void }) {
 
   const resetForm = () => {
     setCustomerName('')
+    setCustomerCode('')
     setPhone('')
     setEmail('')
     setAddress('')
@@ -115,6 +158,7 @@ function Customers({ onLogout }: { onLogout: () => void }) {
 
   const openEditModal = (customer: Customer) => {
     setSelectedCustomer(customer)
+    setCustomerCode(customer.code)
     setCustomerName(customer.name)
     setPhone(customer.phone)
     setEmail(customer.email)
@@ -141,21 +185,68 @@ function Customers({ onLogout }: { onLogout: () => void }) {
       {/* Right Sidebar */}
       <aside className="w-64 bg-sky-100 min-h-screen p-4">
         <div className="space-y-2">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => item.path ? navigate(item.path) : null}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right transition-colors ${
-                item.active 
-                  ? 'bg-[#0e7eb5] text-white' 
-                  : 'text-[#0e7eb5] hover:bg-sky-200'
-              }`}
-            >
-              <span className="flex-1">{item.label}</span>
-              <item.icon size={20} />
-            </button>
-          ))}
+          {menuItems.map((item, index) => {
+            const isOpen = openDropdown === item.label
+            return (
+              <div key={index}>
+                <button
+                  onClick={() => {
+                    if (item.subItems) {
+                      toggleDropdown(item.label)
+                      // Navigate to first sub-item by default
+                      if (item.subItems[0]?.path) {
+                        navigate(item.subItems[0].path)
+                      }
+                    } else if (item.path) {
+                      navigate(item.path)
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right transition-colors ${
+                    item.active 
+                      ? 'bg-[#0e7eb5] text-white' 
+                      : 'text-[#0e7eb5] hover:bg-sky-200'
+                  }`}
+                >
+                  <span className="flex-1">{item.label}</span>
+                  {item.subItems ? (
+                    <>
+                      <item.icon size={20} />
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </>
+                  ) : (
+                    <item.icon size={20} />
+                  )}
+                </button>
+                {item.subItems && isOpen && (
+                  <div className="mr-4 mt-1 space-y-1">
+                    {item.subItems.map((sub, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => sub.path && navigate(sub.path)}
+                        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-right text-sm transition-colors ${
+                          sub.active 
+                            ? 'bg-[#0e7eb5]/20 text-[#0e7eb5]' 
+                            : 'text-gray-600 hover:bg-sky-200'
+                        }`}
+                      >
+                        <span className="flex-1">{sub.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
+        
+        {/* Logout Button */}
+        <button 
+          onClick={handleLogout}
+          className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors bg-red-500 text-white hover:bg-red-600"
+        >
+          <span className="font-medium">تسجيل خروج</span>
+          <LogOut size={20} />
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -213,6 +304,7 @@ function Customers({ onLogout }: { onLogout: () => void }) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">الاجراءات</th>
+                <th className="py-4 px-4 text-right text-gray-600 font-medium">الرقم</th>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">اسم العميل</th>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">العنوان</th>
                 <th className="py-4 px-4 text-right text-gray-600 font-medium">البريد الإلكتروني</th>
@@ -239,11 +331,12 @@ function Customers({ onLogout }: { onLogout: () => void }) {
                       </button>
                     </div>
                   </td>
+                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.code}</td>
                   <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.name}</td>
                   <td className="py-4 px-4 text-right text-gray-600">{customer.address}</td>
                   <td className="py-4 px-4 text-right text-gray-600">{customer.email}</td>
                   <td className="py-4 px-4 text-right text-gray-600">{customer.phone}</td>
-                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.balance.toFixed(2)} ر.س</td>
+                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.balance.toFixed(2)} ج</td>
                 </tr>
               ))}
             </tbody>
@@ -266,15 +359,27 @@ function Customers({ onLogout }: { onLogout: () => void }) {
             </div>
             
             <form onSubmit={handleAddCustomer}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الرقم</label>
+                  <input
+                    type="text"
+                    value={customerCode}
+                    onChange={(e) => setCustomerCode(e.target.value)}
+                    placeholder="يولد تلقائياً"
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="mb-4">
@@ -356,15 +461,27 @@ function Customers({ onLogout }: { onLogout: () => void }) {
             </div>
             
             <form onSubmit={handleEditCustomer}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">الرقم</label>
+                  <input
+                    type="text"
+                    value={customerCode}
+                    onChange={(e) => setCustomerCode(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm mb-2 text-right">اسم العميل</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="mb-4">

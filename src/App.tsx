@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useAuth } from './AuthContext'
+import { ProtectedRoute } from './ProtectedRoute'
 import LandingPage from './LandingPage'
 import Dashboard from './Dashboard'
 import SignIn from './SignIn'
@@ -14,173 +15,171 @@ import PaymentVouchers from './PaymentVouchers'
 import Reports from './Reports'
 import UsersAndPermissions from './UsersAndPermissions'
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const handleLogin = () => {
-    setIsAuthenticated(true)
-  }
-
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-  }
+function AppRoutes() {
+  const { isAuthenticated } = useAuth()
 
   return (
+    <Routes>
+      <Route 
+        path="/" 
+        element={
+          isAuthenticated ? 
+            <Navigate to="/dashboard" replace /> : 
+            <LandingPage />
+        } 
+      />
+      <Route 
+        path="/signin" 
+        element={
+          isAuthenticated ? 
+            <Navigate to="/dashboard" replace /> : 
+            <SignIn />
+        } 
+      />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/categories" 
+        element={
+          <ProtectedRoute>
+            <Categories />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/customers" 
+        element={
+          <ProtectedRoute>
+            <Customers />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/pos" 
+        element={
+          <ProtectedRoute>
+            <PointOfSale />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/pos/returns" 
+        element={
+          <ProtectedRoute>
+            <SalesReturns />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/purchases" 
+        element={
+          <ProtectedRoute>
+            <Purchases />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/purchases/returns" 
+        element={
+          <ProtectedRoute>
+            <Purchases />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/expenses" 
+        element={
+          <ProtectedRoute>
+            <Expenses />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/receipts" 
+        element={
+          <ProtectedRoute>
+            <ReceiptVouchers />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/payments" 
+        element={
+          <ProtectedRoute>
+            <PaymentVouchers />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports" 
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports/purchases" 
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports/top-customers" 
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports/top-products" 
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports/profits" 
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports/customers" 
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/users" 
+        element={
+          <ProtectedRoute>
+            <UsersAndPermissions />
+          </ProtectedRoute>
+        } 
+      />
+    </Routes>
+  )
+}
+
+function App() {
+  return (
     <BrowserRouter>
-      <Routes>
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? 
-              <Navigate to="/dashboard" replace /> : 
-              <LandingPage />
-          } 
-        />
-        <Route 
-          path="/signin" 
-          element={
-            isAuthenticated ? 
-              <Navigate to="/dashboard" replace /> : 
-              <SignIn onLogin={handleLogin} />
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            isAuthenticated ? 
-              <Dashboard onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/categories" 
-          element={
-            isAuthenticated ? 
-              <Categories onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/customers" 
-          element={
-            isAuthenticated ? 
-              <Customers onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/pos" 
-          element={
-            isAuthenticated ? 
-              <PointOfSale onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/pos/returns" 
-          element={
-            isAuthenticated ? 
-              <SalesReturns onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/purchases" 
-          element={
-            isAuthenticated ? 
-              <Purchases onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/purchases/returns" 
-          element={
-            isAuthenticated ? 
-              <Purchases onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/expenses" 
-          element={
-            isAuthenticated ? 
-              <Expenses onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/receipts" 
-          element={
-            isAuthenticated ? 
-              <ReceiptVouchers onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/payments" 
-          element={
-            isAuthenticated ? 
-              <PaymentVouchers onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/reports" 
-          element={
-            isAuthenticated ? 
-              <Reports onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/reports/purchases" 
-          element={
-            isAuthenticated ? 
-              <Reports onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/reports/top-customers" 
-          element={
-            isAuthenticated ? 
-              <Reports onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/reports/top-products" 
-          element={
-            isAuthenticated ? 
-              <Reports onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/reports/profits" 
-          element={
-            isAuthenticated ? 
-              <Reports onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/reports/customers" 
-          element={
-            isAuthenticated ? 
-              <Reports onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-        <Route 
-          path="/users" 
-          element={
-            isAuthenticated ? 
-              <UsersAndPermissions onLogout={handleLogout} /> : 
-              <Navigate to="/signin" replace />
-          } 
-        />
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   )
 }

@@ -72,10 +72,25 @@ import { useNavigate } from 'react-router-dom'
 
 function LandingPage() {
   const navigate = useNavigate()
+  
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white relative">
+      {/* Video Background */}
+      <div className="fixed inset-0 z-0">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+          src="/People_work_and_202603282317.mp4"
+        />
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/80"></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-sky-100 py-4 px-8 rounded-b-[40px] shadow-sm">
+      <header className="bg-sky-100/95 backdrop-blur-md py-4 px-8 rounded-b-[40px] shadow-lg relative z-20">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -86,17 +101,19 @@ function LandingPage() {
               <p className="text-blue-600 text-sm">الحل الشامل لإدارة اعمالك</p>
             </div>
           </div>
-          <button 
-            onClick={() => navigate('/signin')}
-            className="border border-blue-600 text-blue-600 px-6 py-2 rounded-lg font-medium hover:bg-blue-600 hover:text-white transition-colors"
-          >
-            تسجيل الدخول
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/signin')}
+              className="border border-blue-600 text-blue-600 px-6 py-2 rounded-lg font-medium hover:bg-blue-600 hover:text-white transition-colors"
+            >
+              تسجيل الدخول
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-white py-16 px-8 relative overflow-hidden">
+      <section className="py-20 px-8 relative z-10">
         {/* Left Side Decorations */}
         <div className="absolute left-8 top-1/2 -translate-y-1/2 hidden xl:block">
           {/* Floating Card 1 */}
@@ -162,14 +179,14 @@ function LandingPage() {
             <Star className="text-blue-600" size={16} fill="#2563eb" />
           </div>
           
-          <h1 className="text-5xl font-bold text-gray-700 mb-2 leading-tight min-h-[1.2em]">
+          <h1 className="text-5xl font-bold text-white mb-2 leading-tight min-h-[1.2em] drop-shadow-lg">
             نظام إدارة شامل ومتكامل
           </h1>
-          <h2 className="text-5xl font-bold text-blue-600 mb-6 leading-tight min-h-[1.2em]">
-            <TypewriterText text="لشركتك ومتاجرك" delay={1000} className="text-blue-600" />
+          <h2 className="text-5xl font-bold text-blue-400 mb-6 leading-tight min-h-[1.2em]">
+            <TypewriterText text="لشركتك ومتاجرك" delay={1000} className="text-blue-400" />
           </h2>
           
-          <p className="text-blue-500 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
             حل متكامل وسهل الاستخدام لإدارة المبيعات والمشتريات والمخازن والعملاء والتقارير المالية
             مصمم خصيصاً للشركات والمحلات التجارية من جميع الأحجام
           </p>
@@ -184,7 +201,7 @@ function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 px-8 bg-white relative overflow-hidden">
+      <section className="py-12 px-8 relative z-10 bg-gradient-to-b from-transparent to-black/20">
         {/* Decorative elements */}
         <div className="absolute left-10 top-1/2 -translate-y-1/2 hidden lg:block">
           <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl p-3 shadow-lg transform -rotate-12">
@@ -200,27 +217,27 @@ function LandingPage() {
         </div>
         
         <div className="max-w-4xl mx-auto flex justify-center gap-16 relative z-10">
-          <div className="text-center">
-            <p className="text-3xl font-bold text-blue-600">10+</p>
-            <p className="text-blue-500 text-sm">سنوات خبرة</p>
+          <div className="text-center bg-white/10 backdrop-blur-md rounded-2xl p-4">
+            <p className="text-3xl font-bold text-white">10+</p>
+            <p className="text-white/80 text-sm">سنوات خبرة</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-blue-600">24/7</p>
-            <p className="text-blue-500 text-sm">دعم فني</p>
+          <div className="text-center bg-white/10 backdrop-blur-md rounded-2xl p-4">
+            <p className="text-3xl font-bold text-white">24/7</p>
+            <p className="text-white/80 text-sm">دعم فني</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-blue-600">99.9%</p>
-            <p className="text-blue-500 text-sm">وقت التشغيل</p>
+          <div className="text-center bg-white/10 backdrop-blur-md rounded-2xl p-4">
+            <p className="text-3xl font-bold text-white">99.9%</p>
+            <p className="text-white/80 text-sm">وقت التشغيل</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-blue-600">1000+</p>
-            <p className="text-blue-500 text-sm">عميل راضي</p>
+          <div className="text-center bg-white/10 backdrop-blur-md rounded-2xl p-4">
+            <p className="text-3xl font-bold text-white">1000+</p>
+            <p className="text-white/80 text-sm">عميل راضي</p>
           </div>
         </div>
       </section>
 
       {/* What is the System Section */}
-      <section className="py-16 px-8 bg-sky-50 relative overflow-hidden">
+      <section className="py-16 px-8 bg-white/95 backdrop-blur-md relative z-10">
         {/* Decorative floating cards */}
         <div className="absolute left-8 top-20 hidden xl:block">
           <div className="bg-gradient-to-br from-indigo-400 to-indigo-500 rounded-2xl p-4 shadow-xl transform -rotate-6 mb-4 w-40">
@@ -278,7 +295,7 @@ function LandingPage() {
       </section>
 
       {/* Who is this for Section - لمن هذا النظام؟ */}
-      <section className="py-16 px-8 bg-white relative overflow-hidden">
+      <section className="py-16 px-8 bg-sky-50/95 backdrop-blur-md relative z-10">
         {/* Decorative elements */}
         <div className="absolute left-6 top-1/3 hidden xl:block">
           <div className="bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl p-3 shadow-lg transform rotate-12">
@@ -342,7 +359,7 @@ function LandingPage() {
       </section>
 
       {/* Main Features Section - المميزات الرئيسية */}
-      <section className="py-16 px-8 bg-sky-100 relative overflow-hidden">
+      <section className="py-16 px-8 bg-sky-100/95 backdrop-blur-md relative z-10">
         {/* Decorative floating elements */}
         <div className="absolute left-8 top-10 hidden xl:block">
           <div className="bg-white/80 backdrop-blur rounded-2xl p-3 shadow-lg transform -rotate-6 mb-3">
@@ -473,7 +490,7 @@ function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-sky-100 py-8 px-8 text-center">
+      <footer className="bg-sky-100/95 backdrop-blur-md py-8 px-8 text-center relative z-10">
         <p className="text-blue-800 font-medium">جميع الحقوق محفوظة © 2025 نظام الإدارة المتكامل</p>
       </footer>
     </div>

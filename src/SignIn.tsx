@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, Check, X, Eye, EyeOff } from 'lucide-react'
+import { useAuth } from './AuthContext'
 
-interface SignInProps {
-  onLogin: () => void
-}
-
-function SignIn({ onLogin }: SignInProps) {
+function SignIn() {
   const navigate = useNavigate()
+  const { login, signup } = useAuth()
   const [currentView, setCurrentView] = useState<'login' | 'register' | 'forgot' | 'otp' | 'reset'>('login')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   
   // Form states
   const [showPassword, setShowPassword] = useState(false)
@@ -23,16 +23,49 @@ function SignIn({ onLogin }: SignInProps) {
   const [newPassword, setNewPassword] = useState('')
   const [confirmNewPassword, setConfirmNewPassword] = useState('')
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    onLogin()
-    navigate('/dashboard')
+    console.log('Login submitted', { email, password })
+    setError('')
+    setLoading(true)
+    
+    try {
+      const result = await login(email, password)
+      console.log('Login result:', result)
+      
+      if (result.success) {
+        navigate('/dashboard')
+      } else {
+        setError(result.error || 'Login failed')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('An error occurred during login')
+    }
+    
+    setLoading(false)
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    // After registration, go to OTP
-    setCurrentView('otp')
+    setError('')
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+    
+    setLoading(true)
+    const result = await signup(fullName, email, password)
+    
+    if (result.success) {
+      // After registration, go to OTP
+      setCurrentView('otp')
+    } else {
+      setError(result.error || 'Registration failed')
+    }
+    
+    setLoading(false)
   }
 
   const handleForgot = (e: React.FormEvent) => {
@@ -53,8 +86,7 @@ function SignIn({ onLogin }: SignInProps) {
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault()
     // After reset, login
-    onLogin()
-    navigate('/dashboard')
+    setCurrentView('login')
   }
 
   const handleOtpChange = (index: number, value: string) => {
@@ -83,9 +115,12 @@ function SignIn({ onLogin }: SignInProps) {
       {/* Left Side - Forms */}
       <div className="w-1/2 bg-white flex flex-col items-center justify-center p-12">
         {/* Logo */}
-        <div className="w-16 h-16 bg-[#0e7eb5] rounded-lg flex items-center justify-center mb-4">
+        <button
+          onClick={() => navigate('/')}
+          className="w-16 h-16 bg-[#0e7eb5] rounded-lg flex items-center justify-center mb-4 hover:opacity-90 transition-opacity cursor-pointer"
+        >
           <Home className="text-white" size={32} strokeWidth={1.5} />
-        </div>
+        </button>
 
         {/* LOGIN FORM */}
         {currentView === 'login' && (
@@ -98,13 +133,25 @@ function SignIn({ onLogin }: SignInProps) {
               <p className="text-gray-500 text-center text-xs mb-6">أدخل بياناتك للدخول إلى حسابك</p>
 
               <form onSubmit={handleLogin}>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
+                    {error}
+                  </div>
+                )}
+                
+                {/* Demo credentials hint */}
+                <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-600 text-xs text-center">
+                  <p className="font-bold">بيانات تجريبية:</p>
+                  <p>admin@company.com / admin123</p>
+                </div>
+
                 <div className="mb-4">
                   <label className="block text-gray-600 text-xs mb-2 text-right">البريد الالكتروني</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Ahmed 12@gamil.com"
+                    placeholder="admin@company.com"
                     className="w-full bg-gray-100 rounded-lg py-3 px-4 text-right text-sm focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
                   />
                 </div>
@@ -125,7 +172,7 @@ function SignIn({ onLogin }: SignInProps) {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="******************"
+                      placeholder="••••••••"
                       className="w-full bg-gray-100 rounded-lg py-3 px-4 text-right text-sm focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
                     />
                     <button
@@ -140,9 +187,10 @@ function SignIn({ onLogin }: SignInProps) {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0e7eb5] text-white py-3 rounded-lg font-bold text-sm hover:bg-[#0a6a99] transition-colors"
+                  disabled={loading}
+                  className="w-full bg-[#0e7eb5] text-white py-3 rounded-lg font-bold text-sm hover:bg-[#0a6a99] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  تسجيل الدخول
+                  {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
                 </button>
               </form>
 
@@ -402,9 +450,12 @@ function SignIn({ onLogin }: SignInProps) {
       {/* Right Side - Blue Background */}
       <div className="w-1/2 bg-[#0e7eb5] flex flex-col items-center justify-center p-12 text-white">
         {/* Logo */}
-        <div className="w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+        <button
+          onClick={() => navigate('/')}
+          className="w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center mb-6 hover:bg-white/30 transition-colors cursor-pointer"
+        >
           <Home className="text-white" size={40} strokeWidth={1.5} />
-        </div>
+        </button>
         
         {/* Title */}
         <h1 className="text-3xl font-bold mb-2">نظام الإدارة المتكامل</h1>

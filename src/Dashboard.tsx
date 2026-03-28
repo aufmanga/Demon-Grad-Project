@@ -1,22 +1,56 @@
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut, Home, Box, Users, ShoppingCart, CreditCard, Wallet, ClipboardList, CreditCard as CardIcon, TrendingUp, Settings, FileText } from 'lucide-react'
+import { User, LogOut, Home, Box, Users, ShoppingCart, CreditCard, Wallet, ClipboardList, CreditCard as CardIcon, TrendingUp, Settings, FileText, ChevronUp, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { useAuth } from './AuthContext'
 
-interface DashboardProps {
-  onLogout: () => void
-}
-
-function Dashboard({ onLogout }: DashboardProps) {
+function Dashboard() {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const toggleDropdown = (label: string) => {
+    setOpenDropdown((prev) => prev === label ? null : label)
+  }
+
   const navItems = [
     { icon: Home, label: 'الصفحة الرئيسية', active: true, path: '/dashboard' },
     { icon: Box, label: 'الاصناف', path: '/categories' },
     { icon: Users, label: 'العملاء', path: '/customers' },
-    { icon: ShoppingCart, label: 'نقطة البيع', active: false, path: '/pos' },
-    { icon: CreditCard, label: 'المشتريات', path: '/purchases' },
+    { 
+      icon: ShoppingCart, 
+      label: 'نقطة البيع', 
+      dropdown: [
+        { label: 'فواتير المبيعات', path: '/pos' },
+        { label: 'مرتجع المبيعات', path: '/pos/returns' },
+      ]
+    },
+    { 
+      icon: CreditCard, 
+      label: 'المشتريات', 
+      dropdown: [
+        { label: 'فواتير المشتريات', path: '/purchases' },
+        { label: 'مرتجع المشتريات', path: '/purchases/returns' },
+      ]
+    },
     { icon: Wallet, label: 'المصروفات', path: '/expenses' },
     { icon: FileText, label: 'إذونات القبض', path: '/receipts' },
     { icon: CardIcon, label: 'إذونات الصرف', path: '/payments' },
-    { icon: TrendingUp, label: 'التقارير', path: '/reports' },
+    { 
+      icon: TrendingUp, 
+      label: 'التقارير', 
+      dropdown: [
+        { label: 'تقرير المشتريات', path: '/reports/purchases' },
+        { label: 'أفضل العملاء', path: '/reports/top-customers' },
+        { label: 'أفضل المنتجات', path: '/reports/top-products' },
+        { label: 'الأرباح', path: '/reports/profits' },
+        { label: 'تقرير العملاء', path: '/reports/customers' },
+      ]
+    },
     { icon: Settings, label: 'المستخدمين والصلاحيات', path: '/users' },
   ]
 
@@ -36,7 +70,7 @@ function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-r from-sky-300 to-blue-400 z-50 shadow-md" style={{ borderRadius: '0 0 40px 40px' }}>
+      <header className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-r from-sky-300 to-blue-400 z-50 shadow-md" style={{ borderRadius: '0 0 0 40px' }}>
         <div className="flex items-center justify-between h-full px-8">
           {/* User Info - Left */}
           <div className="flex items-center gap-3 ml-4">
@@ -50,7 +84,9 @@ function Dashboard({ onLogout }: DashboardProps) {
           </div>
           
           {/* Title - Right */}
-          <h1 className="text-white text-4xl font-bold mr-4">نظام إدارة الشركات</h1>
+          <div className="flex items-center gap-4 mr-4">
+            <h1 className="text-white text-4xl font-bold">نظام إدارة الشركات</h1>
+          </div>
         </div>
       </header>
 
@@ -59,6 +95,42 @@ function Dashboard({ onLogout }: DashboardProps) {
         <nav className="space-y-1">
           {navItems.map((item, index) => {
             const Icon = item.icon
+            const isOpen = openDropdown === item.label
+            
+            if (item.dropdown) {
+              return (
+                <div key={index}>
+                  <button
+                    onClick={() => toggleDropdown(item.label)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl transition-colors w-full text-right ${
+                      isOpen 
+                        ? 'bg-blue-500 text-white shadow-md' 
+                        : 'text-blue-700 hover:bg-blue-200'
+                    }`}
+                  >
+                    <span className="font-medium">{item.label}</span>
+                    <div className="flex items-center gap-2">
+                      <Icon size={20} />
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </div>
+                  </button>
+                  {isOpen && (
+                    <div className="mr-4 mt-1 space-y-1">
+                      {item.dropdown.map((subItem, subIndex) => (
+                        <button
+                          key={subIndex}
+                          onClick={() => navigate(subItem.path)}
+                          className="block w-full text-right px-4 py-2 text-sm text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                        >
+                          {subItem.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            
             return (
               <button
                 key={index}
@@ -75,23 +147,23 @@ function Dashboard({ onLogout }: DashboardProps) {
             )
           })}
         </nav>
+        
+        {/* Logout Button */}
+        <button 
+          onClick={handleLogout}
+          className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors bg-red-500 text-white hover:bg-red-600"
+        >
+          <span className="font-medium">تسجيل خروج</span>
+          <LogOut size={20} />
+        </button>
       </aside>
 
       {/* Main Content */}
       <main className="mr-64 pt-28 px-6 pb-6 flex-1">
         {/* Dashboard Title Section */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-bold text-blue-600 mb-1">لوحة التحكم</h2>
-            <p className="text-gray-500">نظرة عامة على أداء الشركة</p>
-          </div>
-          <button 
-            onClick={onLogout}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            <LogOut size={18} />
-            تسجيل خروج
-          </button>
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-blue-600 mb-1">لوحة التحكم</h2>
+          <p className="text-gray-500">نظرة عامة على أداء الشركة</p>
         </div>
 
         {/* Stats Cards */}

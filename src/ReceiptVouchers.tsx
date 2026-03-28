@@ -17,8 +17,10 @@ import {
   Box,
   ChevronDown,
   ChevronUp,
-  CheckSquare
+  CheckSquare,
+  LogOut
 } from 'lucide-react'
+import { useAuth } from './AuthContext'
 
 interface ReceiptVoucher {
   id: number
@@ -30,15 +32,25 @@ interface ReceiptVoucher {
   description: string
 }
 
-function ReceiptVouchers({ onLogout }: { onLogout: () => void }) {
+function ReceiptVouchers() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState<ReceiptVoucher | null>(null)
-  const [expandedSidebar, setExpandedSidebar] = useState(true)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [todayOnly, setTodayOnly] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const toggleDropdown = (label: string) => {
+    setOpenDropdown((prev) => prev === label ? null : label)
+  }
   
   // Form states
   const [voucherNumber, setVoucherNumber] = useState('')
@@ -215,47 +227,68 @@ function ReceiptVouchers({ onLogout }: { onLogout: () => void }) {
       {/* Right Sidebar */}
       <aside className="w-64 bg-sky-100 min-h-screen p-4">
         <div className="space-y-2">
-          {menuItems.map((item, index) => (
-            <div key={index}>
-              <button
-                onClick={() => {
-                  if (item.path) {
-                    navigate(item.path)
-                  }
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right transition-colors ${
-                  item.active 
-                    ? 'bg-[#0e7eb5] text-white' 
-                    : 'text-[#0e7eb5] hover:bg-sky-200'
-                }`}
-              >
-                <span className="flex-1">{item.label}</span>
-                {item.subItems ? (
-                  expandedSidebar ? <ChevronUp size={20} /> : <ChevronDown size={20} />
-                ) : (
-                  <item.icon size={20} />
+          {menuItems.map((item, index) => {
+            const isOpen = openDropdown === item.label
+            return (
+              <div key={index}>
+                <button
+                  onClick={() => {
+                    if (item.subItems) {
+                      toggleDropdown(item.label)
+                      // Navigate to first sub-item by default
+                      if (item.subItems[0]?.path) {
+                        navigate(item.subItems[0].path)
+                      }
+                    } else if (item.path) {
+                      navigate(item.path)
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right transition-colors ${
+                    item.active 
+                      ? 'bg-[#0e7eb5] text-white' 
+                      : 'text-[#0e7eb5] hover:bg-sky-200'
+                  }`}
+                >
+                  <span className="flex-1">{item.label}</span>
+                  {item.subItems ? (
+                    <>
+                      <item.icon size={20} />
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </>
+                  ) : (
+                    <item.icon size={20} />
+                  )}
+                </button>
+                {item.subItems && isOpen && (
+                  <div className="mr-4 mt-1 space-y-1">
+                    {item.subItems.map((sub, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => sub.path && navigate(sub.path)}
+                        className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-right text-sm transition-colors ${
+                          sub.active 
+                            ? 'bg-[#0e7eb5]/20 text-[#0e7eb5]' 
+                            : 'text-gray-600 hover:bg-sky-200'
+                        }`}
+                      >
+                        <span className="flex-1">{sub.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </button>
-              {item.subItems && expandedSidebar && (
-                <div className="mr-4 mt-1 space-y-1">
-                  {item.subItems.map((sub, subIndex) => (
-                    <button
-                      key={subIndex}
-                      onClick={() => sub.path && navigate(sub.path)}
-                      className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-right text-sm transition-colors ${
-                        sub.active 
-                          ? 'bg-[#0e7eb5]/20 text-[#0e7eb5]' 
-                          : 'text-gray-600 hover:bg-sky-200'
-                      }`}
-                    >
-                      <span className="flex-1">{sub.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
+        
+        {/* Logout Button */}
+        <button 
+          onClick={handleLogout}
+          className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors bg-red-500 text-white hover:bg-red-600"
+        >
+          <span className="font-medium">تسجيل خروج</span>
+          <LogOut size={20} />
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -356,12 +389,6 @@ function ReceiptVouchers({ onLogout }: { onLogout: () => void }) {
                         className="text-red-500 hover:text-red-600"
                       >
                         <Trash2 size={18} />
-                      </button>
-                      <button 
-                        onClick={() => openEditModal(voucher)}
-                        className="text-[#0e7eb5] hover:text-[#0a6a99]"
-                      >
-                        <Pencil size={18} />
                       </button>
                     </div>
                   </td>
