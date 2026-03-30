@@ -112,8 +112,8 @@ function Dashboard() {
         />
       )}
 
-      {/* Sidebar - Desktop: Fixed, Mobile: Slide-out Overlay */}
-      <aside className={`fixed inset-y-0 right-0 w-64 bg-gradient-to-b from-sky-100 to-blue-200 pt-6 pb-4 px-3 overflow-y-auto z-50 transition-transform duration-300 md:translate-x-0 md:static md:h-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ borderRadius: '40px 0 0 0' }}>
+      {/* Sidebar - Desktop: Static at top, Mobile: Fixed overlay */}
+      <aside className={`fixed md:sticky md:top-24 top-0 right-0 w-64 h-screen md:h-[calc(100vh-6rem)] bg-gradient-to-b from-sky-100 to-blue-200 pt-6 pb-4 px-3 overflow-y-auto z-50 transition-transform duration-300 md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`} style={{ borderRadius: '40px 0 0 0' }}>
         {/* Close button for mobile */}
         <button
           onClick={() => setMobileMenuOpen(false)}
@@ -188,7 +188,7 @@ function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:mr-64 pt-20 md:pt-28 px-4 md:px-6 pb-6 min-w-0">
+      <main className="flex-1 pt-20 md:pt-28 px-4 md:px-6 pb-6 min-w-0 md:mr-0">
         {/* Dashboard Title Section */}
         <div className="mb-4 md:mb-6">
           <h2 className="text-xl md:text-3xl font-bold text-blue-600 mb-1">لوحة التحكم</h2>
