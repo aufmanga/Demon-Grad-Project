@@ -17,7 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  LogOut
+  LogOut,
+  Menu
 } from 'lucide-react'
 import { useAuth } from './AuthContext'
 
@@ -55,6 +56,7 @@ function PointOfSale() {
   const [showAddInvoiceModal, setShowAddInvoiceModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [openDropdown, setOpenDropdown] = useState<string | null>('نقطة البيع')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newInvoiceNumber, setNewInvoiceNumber] = useState('')
 
   const handleLogout = () => {
@@ -324,8 +326,23 @@ function PointOfSale() {
 
   return (
     <div className="min-h-screen bg-sky-50 flex">
-      {/* Right Sidebar */}
-      <aside className="w-64 bg-sky-100 min-h-screen p-4">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Right Sidebar - Desktop: Static, Mobile: Slide-out */}
+      <aside className={`fixed top-0 right-0 w-64 h-screen bg-sky-100 p-4 z-50 transition-transform duration-300 md:translate-x-0 md:static md:h-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden absolute top-4 left-4 p-2 bg-white/50 rounded-lg hover:bg-white/70 transition-colors"
+        >
+          <X size={20} />
+        </button>
         <div className="space-y-2">
           {menuItems.map((item, index) => {
             const isOpen = openDropdown === item.label
@@ -394,9 +411,21 @@ function PointOfSale() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 md:p-6 min-w-0">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between mb-4">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 bg-white rounded-lg shadow-md"
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="text-lg font-bold text-[#0e7eb5]">نقطة البيع</h1>
+          <div className="w-10"></div>
+        </div>
+
         {/* Header */}
-        <header className="bg-sky-100 rounded-3xl p-4 mb-6 flex items-center justify-between">
+        <header className="hidden md:flex bg-sky-100 rounded-3xl p-4 mb-6 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-[#0e7eb5] rounded-full flex items-center justify-center text-white font-bold text-xl">
               i
@@ -414,14 +443,14 @@ function PointOfSale() {
         </header>
 
         {/* Page Title */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div className="text-right">
-            <h2 className="text-3xl font-bold text-[#0e7eb5]">فواتير المبيعات</h2>
-            <p className="text-gray-400">إدارة فواتير البيع والمبيعات</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#0e7eb5]">فواتير المبيعات</h2>
+            <p className="text-gray-400 text-sm md:text-base">إدارة فواتير البيع والمبيعات</p>
           </div>
           <button 
             onClick={openAddInvoiceModal}
-            className="bg-[#0e7eb5] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0a6a99] transition-colors"
+            className="bg-[#0e7eb5] text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0a6a99] transition-colors text-sm md:text-base"
           >
             <Plus size={20} />
             إنشاء فاتورة جديد
@@ -429,82 +458,82 @@ function PointOfSale() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-gray-600 text-sm mb-1">عدد الفواتير</p>
-            <p className="text-2xl font-bold text-gray-800">{totalInvoices}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm text-center">
+            <p className="text-gray-600 text-xs md:text-sm mb-1">عدد الفواتير</p>
+            <p className="text-xl md:text-2xl font-bold text-gray-800">{totalInvoices}</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-amber-500 text-sm mb-1">إجمالي المبيعات</p>
-            <p className="text-2xl font-bold text-amber-500">{totalSales.toLocaleString()} ج</p>
+          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm text-center">
+            <p className="text-amber-500 text-xs md:text-sm mb-1">إجمالي المبيعات</p>
+            <p className="text-xl md:text-2xl font-bold text-amber-500">{totalSales.toLocaleString()} ج</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-[#0e7eb5] text-sm mb-1">إجمالي المحصل</p>
-            <p className="text-2xl font-bold text-[#0e7eb5]">{totalCollected.toLocaleString()} ج</p>
+          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm text-center">
+            <p className="text-[#0e7eb5] text-xs md:text-sm mb-1">إجمالي المحصل</p>
+            <p className="text-xl md:text-2xl font-bold text-[#0e7eb5]">{totalCollected.toLocaleString()} ج</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-green-500 text-sm mb-1">المبلغ المتبقي</p>
-            <p className="text-2xl font-bold text-green-500">{totalRemaining.toLocaleString()} ج</p>
+          <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm text-center">
+            <p className="text-green-500 text-xs md:text-sm mb-1">المبلغ المتبقي</p>
+            <p className="text-xl md:text-2xl font-bold text-green-500">{totalRemaining.toLocaleString()} ج</p>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-3 md:p-4 mb-4 md:mb-6">
           <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="البحث برقم الفاتورة أو اسم العميل..."
-              className="w-full bg-gray-50 rounded-lg py-3 px-4 pr-12 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+              className="w-full bg-gray-50 rounded-lg py-2.5 md:py-3 px-4 pr-12 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5] text-sm md:text-base"
             />
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           </div>
         </div>
 
         {/* Invoices Table */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden table-container">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">الإجراءات</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">الحالة</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">المتبقي</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">المدفوع</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">الإجمالي</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">عدد الأصناف</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">اسم العميل</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">التاريخ</th>
-                <th className="py-4 px-3 text-right text-gray-600 font-medium text-sm">رقم الفاتورة</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">الإجراءات</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">الحالة</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">المتبقي</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">المدفوع</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">الإجمالي</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">عدد الأصناف</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">اسم العميل</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">التاريخ</th>
+                <th className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 font-medium text-sm">رقم الفاتورة</th>
               </tr>
             </thead>
             <tbody>
               {filteredInvoices.map((invoice) => (
                 <tr key={invoice.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 px-3">
+                  <td className="py-3 md:py-4 px-2 md:px-3">
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => openDeleteModal(invoice)}
                         className="text-red-500 hover:text-red-600"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 className="w-4 h-4 md:w-[18px] md:h-[18px]" />
                       </button>
                       <button 
                         onClick={() => openEditModal(invoice)}
                         className="text-[#0e7eb5] hover:text-[#0a6a99]"
                       >
-                        <Eye size={18} />
+                        <Eye className="w-4 h-4 md:w-[18px] md:h-[18px]" />
                       </button>
                     </div>
                   </td>
-                  <td className="py-4 px-3">{getStatusBadge(invoice.status)}</td>
-                  <td className="py-4 px-3 text-right text-amber-500 font-medium">{invoice.remaining.toLocaleString()} ج</td>
-                  <td className="py-4 px-3 text-right text-gray-600">{invoice.paid.toLocaleString()} ج</td>
-                  <td className="py-4 px-3 text-right text-gray-600">{invoice.total.toLocaleString()} ج</td>
-                  <td className="py-4 px-3 text-right text-gray-600">{invoice.itemCount}</td>
-                  <td className="py-4 px-3 text-right text-gray-800 font-medium">{invoice.customerName}</td>
-                  <td className="py-4 px-3 text-right text-gray-600">{invoice.date}</td>
-                  <td className="py-4 px-3 text-right text-gray-800 font-medium">{invoice.invoiceNumber}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3">{getStatusBadge(invoice.status)}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-amber-500 font-medium text-sm">{invoice.remaining.toLocaleString()} ج</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 text-sm">{invoice.paid.toLocaleString()} ج</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 text-sm">{invoice.total.toLocaleString()} ج</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 text-sm">{invoice.itemCount}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-800 font-medium text-sm">{invoice.customerName}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-600 text-sm">{invoice.date}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-3 text-right text-gray-800 font-medium text-sm">{invoice.invoiceNumber}</td>
                 </tr>
               ))}
             </tbody>

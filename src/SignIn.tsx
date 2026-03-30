@@ -111,15 +111,15 @@ function SignIn() {
   ]
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Forms */}
-      <div className="w-1/2 bg-white flex flex-col items-center justify-center p-12">
+      <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-4 md:p-8 lg:p-12 order-2 lg:order-1">
         {/* Logo */}
         <button
           onClick={() => navigate('/')}
-          className="w-16 h-16 bg-[#0e7eb5] rounded-lg flex items-center justify-center mb-4 hover:opacity-90 transition-opacity cursor-pointer"
+          className="w-12 h-12 md:w-16 md:h-16 bg-[#0e7eb5] rounded-lg flex items-center justify-center mb-4 hover:opacity-90 transition-opacity cursor-pointer"
         >
-          <Home className="text-white" size={32} strokeWidth={1.5} />
+          <Home className="text-white" size={24} md:size={32} strokeWidth={1.5} />
         </button>
 
         {/* LOGIN FORM */}
@@ -448,31 +448,31 @@ function SignIn() {
       </div>
 
       {/* Right Side - Blue Background */}
-      <div className="w-1/2 bg-[#0e7eb5] flex flex-col items-center justify-center p-12 text-white">
+      <div className="w-full lg:w-1/2 bg-[#0e7eb5] flex flex-col items-center justify-center p-6 md:p-8 lg:p-12 text-white order-1 lg:order-2 min-h-[200px] lg:min-h-screen">
         {/* Logo */}
         <button
           onClick={() => navigate('/')}
-          className="w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center mb-6 hover:bg-white/30 transition-colors cursor-pointer"
+          className="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-xl flex items-center justify-center mb-4 md:mb-6 hover:bg-white/30 transition-colors cursor-pointer"
         >
-          <Home className="text-white" size={40} strokeWidth={1.5} />
+          <Home className="text-white" size={32} md:size={40} strokeWidth={1.5} />
         </button>
         
         {/* Title */}
-        <h1 className="text-3xl font-bold mb-2">نظام الإدارة المتكامل</h1>
-        <p className="text-white/80 text-sm text-center mb-12">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2">نظام الإدارة المتكامل</h1>
+        <p className="text-white/80 text-xs md:text-sm text-center mb-6 md:mb-12 max-w-xs">
           الحل الشامل لإدارة أعمالك التجارية بكفاءة واحترافية
         </p>
 
-        {/* Feature Pills */}
-        <div className="space-y-4 w-full max-w-sm">
+        {/* Feature Pills - Hidden on small mobile, shown on larger screens */}
+        <div className="hidden sm:flex flex-col space-y-3 md:space-y-4 w-full max-w-xs md:max-w-sm">
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="bg-white/20 backdrop-blur-sm rounded-full py-3 px-6 flex items-center justify-between"
+              className="bg-white/20 backdrop-blur-sm rounded-full py-2 md:py-3 px-4 md:px-6 flex items-center justify-between"
             >
-              <span className="text-white font-medium">{feature.text}</span>
-              <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
-                <Check className="text-[#0e7eb5]" size={16} strokeWidth={3} />
+              <span className="text-white text-xs md:text-sm font-medium">{feature.text}</span>
+              <div className="w-5 h-5 md:w-6 md:h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+                <Check className="text-[#0e7eb5] w-3.5 h-3.5 md:w-4 md:h-4" strokeWidth={3} />
               </div>
             </div>
           ))}

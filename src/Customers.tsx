@@ -20,7 +20,8 @@ import {
   MapPin,
   LogOut,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Menu
 } from 'lucide-react'
 import { useAuth } from './AuthContext'
 
@@ -43,6 +44,7 @@ function Customers() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -182,8 +184,23 @@ function Customers() {
 
   return (
     <div className="min-h-screen bg-sky-50 flex">
-      {/* Right Sidebar */}
-      <aside className="w-64 bg-sky-100 min-h-screen p-4">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Right Sidebar - Desktop: Static, Mobile: Slide-out */}
+      <aside className={`fixed top-0 right-0 w-64 h-screen bg-sky-100 p-4 z-50 transition-transform duration-300 md:translate-x-0 md:static md:h-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden absolute top-4 left-4 p-2 bg-white/50 rounded-lg hover:bg-white/70 transition-colors"
+        >
+          <X size={20} />
+        </button>
         <div className="space-y-2">
           {menuItems.map((item, index) => {
             const isOpen = openDropdown === item.label
@@ -250,9 +267,21 @@ function Customers() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 md:p-6 min-w-0">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between mb-4">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 bg-white rounded-lg shadow-md"
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="text-lg font-bold text-[#0e7eb5]">العملاء</h1>
+          <div className="w-10"></div>
+        </div>
+
         {/* Header */}
-        <header className="bg-sky-100 rounded-3xl p-4 mb-6 flex items-center justify-between">
+        <header className="hidden md:flex bg-sky-100 rounded-3xl p-4 mb-6 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-[#0e7eb5] rounded-full flex items-center justify-center text-white font-bold text-xl">
               i
@@ -269,15 +298,15 @@ function Customers() {
           <div className="w-12"></div>
         </header>
 
-        {/* Page Title - Button on LEFT, Title on RIGHT */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Page Title */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div className="text-right">
-            <h2 className="text-3xl font-bold text-[#0e7eb5]">العملاء</h2>
-            <p className="text-gray-400">إدارة بيانات العملاء</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#0e7eb5]">العملاء</h2>
+            <p className="text-gray-400 text-sm md:text-base">إدارة بيانات العملاء</p>
           </div>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="bg-[#0e7eb5] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0a6a99] transition-colors"
+            className="bg-[#0e7eb5] text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0a6a99] transition-colors text-sm md:text-base"
           >
             <Plus size={20} />
             إضافة عميل جديد
@@ -285,58 +314,58 @@ function Customers() {
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-3 md:p-4 mb-6">
           <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="البحث عن الصنف..."
-              className="w-full bg-gray-50 rounded-lg py-3 px-4 pr-12 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5]"
+              placeholder="البحث بالعملاء..."
+              className="w-full bg-gray-50 rounded-lg py-2.5 md:py-3 px-4 pr-12 text-right focus:outline-none focus:ring-2 focus:ring-[#0e7eb5] text-sm md:text-base"
             />
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           </div>
         </div>
 
         {/* Customers Table */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden table-container">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">الاجراءات</th>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">الرقم</th>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">اسم العميل</th>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">العنوان</th>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">البريد الإلكتروني</th>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">رقم الهاتف</th>
-                <th className="py-4 px-4 text-right text-gray-600 font-medium">الرصيد</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">الاجراءات</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">الرقم</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">اسم العميل</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">العنوان</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">البريد الإلكتروني</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">رقم الهاتف</th>
+                <th className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 font-medium text-sm">الرصيد</th>
               </tr>
             </thead>
             <tbody>
               {filteredCustomers.map((customer) => (
                 <tr key={customer.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 px-4">
+                  <td className="py-3 md:py-4 px-2 md:px-4">
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => openDeleteModal(customer)}
                         className="text-red-500 hover:text-red-600"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 className="w-4 h-4 md:w-[18px] md:h-[18px]" />
                       </button>
                       <button 
                         onClick={() => openEditModal(customer)}
                         className="text-[#0e7eb5] hover:text-[#0a6a99]"
                       >
-                        <Pencil size={18} />
+                        <Pencil className="w-4 h-4 md:w-[18px] md:h-[18px]" />
                       </button>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.code}</td>
-                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.name}</td>
-                  <td className="py-4 px-4 text-right text-gray-600">{customer.address}</td>
-                  <td className="py-4 px-4 text-right text-gray-600">{customer.email}</td>
-                  <td className="py-4 px-4 text-right text-gray-600">{customer.phone}</td>
-                  <td className="py-4 px-4 text-right text-gray-800 font-medium">{customer.balance.toFixed(2)} ج</td>
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-800 font-medium text-sm">{customer.code}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-800 font-medium text-sm">{customer.name}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 text-sm">{customer.address}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 text-sm">{customer.email}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-600 text-sm">{customer.phone}</td>
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right text-gray-800 font-medium text-sm">{customer.balance.toFixed(2)} ج</td>
                 </tr>
               ))}
             </tbody>

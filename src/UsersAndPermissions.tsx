@@ -17,7 +17,8 @@ import {
   Box,
   ChevronDown,
   ChevronUp,
-  LogOut
+  LogOut,
+  Menu
 } from 'lucide-react'
 import { useAuth } from './AuthContext'
 
@@ -39,6 +40,7 @@ function UsersAndPermissions() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -236,8 +238,23 @@ function UsersAndPermissions() {
 
   return (
     <div className="min-h-screen bg-sky-50 flex">
-      {/* Right Sidebar */}
-      <aside className="w-64 bg-sky-100 min-h-screen p-4">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Right Sidebar - Desktop: Static, Mobile: Slide-out */}
+      <aside className={`fixed top-0 right-0 w-64 h-screen bg-sky-100 p-4 z-50 transition-transform duration-300 md:translate-x-0 md:static md:h-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden absolute top-4 left-4 p-2 bg-white/50 rounded-lg hover:bg-white/70 transition-colors"
+        >
+          <X size={20} />
+        </button>
         <div className="space-y-2">
           {menuItems.map((item, index) => {
             const isOpen = openDropdown === item.label
@@ -304,9 +321,21 @@ function UsersAndPermissions() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 md:p-6 min-w-0">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between mb-4">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 bg-white rounded-lg shadow-md"
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="text-lg font-bold text-[#0e7eb5]">المستخدمين</h1>
+          <div className="w-10"></div>
+        </div>
+
         {/* Header */}
-        <header className="bg-sky-100 rounded-3xl p-4 mb-6 flex items-center justify-between">
+        <header className="hidden md:flex bg-sky-100 rounded-3xl p-4 mb-6 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-[#0e7eb5] rounded-full flex items-center justify-center text-white font-bold text-xl">
               i

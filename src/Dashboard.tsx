@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut, Home, Box, Users, ShoppingCart, CreditCard, Wallet, ClipboardList, CreditCard as CardIcon, TrendingUp, Settings, FileText, ChevronUp, ChevronDown } from 'lucide-react'
+import { User, LogOut, Home, Box, Users, ShoppingCart, CreditCard, Wallet, ClipboardList, CreditCard as CardIcon, TrendingUp, Settings, FileText, ChevronUp, ChevronDown, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from './AuthContext'
 
@@ -7,6 +7,7 @@ function Dashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -15,6 +16,11 @@ function Dashboard() {
 
   const toggleDropdown = (label: string) => {
     setOpenDropdown((prev) => prev === label ? null : label)
+  }
+
+  const handleNavClick = (path: string) => {
+    navigate(path)
+    setMobileMenuOpen(false)
   }
 
   const navItems = [
@@ -70,28 +76,51 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-r from-sky-300 to-blue-400 z-50 shadow-md" style={{ borderRadius: '0 0 0 40px' }}>
-        <div className="flex items-center justify-between h-full px-8">
+      <header className="fixed top-0 left-0 right-0 h-16 md:h-24 bg-gradient-to-r from-sky-300 to-blue-400 z-50 shadow-md" style={{ borderRadius: '0 0 0 20px' }}>
+        <div className="flex items-center justify-between h-full px-4 md:px-8">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+          >
+            <Menu size={24} />
+          </button>
+
           {/* User Info - Left */}
-          <div className="flex items-center gap-3 ml-4">
-            <div className="w-16 h-16 bg-blue-700 rounded-full flex items-center justify-center text-white shadow-lg">
-              <User size={32} />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-10 h-10 md:w-16 md:h-16 bg-blue-700 rounded-full flex items-center justify-center text-white shadow-lg">
+              <User className="w-5 h-5 md:w-8 md:h-8" />
             </div>
             <div className="text-right">
-              <p className="text-white font-bold text-xl">احمد محمد</p>
-              <p className="text-blue-100 text-sm">مدير النظام</p>
+              <p className="text-white font-bold text-sm md:text-xl">احمد محمد</p>
+              <p className="text-blue-100 text-xs md:text-sm hidden sm:block">مدير النظام</p>
             </div>
           </div>
           
           {/* Title - Right */}
-          <div className="flex items-center gap-4 mr-4">
-            <h1 className="text-white text-4xl font-bold">نظام إدارة الشركات</h1>
+          <div className="flex items-center gap-2 md:gap-4">
+            <h1 className="text-white text-lg md:text-4xl font-bold">نظام إدارة الشركات</h1>
           </div>
         </div>
       </header>
 
-      {/* Sidebar */}
-      <aside className="fixed top-24 right-0 w-64 h-[calc(100vh-6rem)] bg-gradient-to-b from-sky-100 to-blue-200 pt-6 pb-4 px-3 overflow-y-auto" style={{ borderRadius: '40px 0 0 0' }}>
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Desktop: Fixed, Mobile: Slide-out Overlay */}
+      <aside className={`fixed inset-y-0 right-0 w-64 bg-gradient-to-b from-sky-100 to-blue-200 pt-6 pb-4 px-3 overflow-y-auto z-50 transition-transform duration-300 md:translate-x-0 md:static md:h-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ borderRadius: '40px 0 0 0' }}>
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden absolute top-4 left-4 p-2 bg-white/50 rounded-lg hover:bg-white/70 transition-colors"
+        >
+          <X size={20} />
+        </button>
         <nav className="space-y-1">
           {navItems.map((item, index) => {
             const Icon = item.icon
@@ -159,15 +188,15 @@ function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="mr-64 pt-28 px-6 pb-6 flex-1">
+      <main className="flex-1 md:mr-64 pt-20 md:pt-28 px-4 md:px-6 pb-6 min-w-0">
         {/* Dashboard Title Section */}
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-blue-600 mb-1">لوحة التحكم</h2>
-          <p className="text-gray-500">نظرة عامة على أداء الشركة</p>
+        <div className="mb-4 md:mb-6">
+          <h2 className="text-xl md:text-3xl font-bold text-blue-600 mb-1">لوحة التحكم</h2>
+          <p className="text-gray-500 text-sm md:text-base">نظرة عامة على أداء الشركة</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
           {/* Customers Card */}
           <div className="bg-white rounded-2xl p-5 shadow-lg flex items-center gap-4 border border-gray-100">
             <div className="w-16 h-16 bg-purple-800 rounded-xl flex items-center justify-center shadow-md">
@@ -214,17 +243,17 @@ function Dashboard() {
         </div>
 
         {/* Top Products Table */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-4 md:mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Box size={20} className="text-blue-600" />
-            <h3 className="text-blue-600 font-bold text-lg">أكثر الاصناف مبيعا</h3>
+            <h3 className="text-blue-600 font-bold text-base md:text-lg">أكثر الاصناف مبيعا</h3>
           </div>
           <div className="space-y-3">
             {topProducts.map((product, index) => (
               <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                <span className="text-gray-800 font-medium">{product.price}</span>
+                <span className="text-gray-800 font-medium text-sm">{product.price}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-gray-700">{product.name}</span>
+                  <span className="text-gray-700 text-sm">{product.name}</span>
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
                     index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-blue-400' : index === 2 ? 'bg-blue-300' : 'bg-blue-200'
                   }`}>
@@ -237,58 +266,60 @@ function Dashboard() {
         </div>
 
         {/* Recent Sales Table */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h3 className="text-blue-600 font-bold text-lg mb-4">اخر فواتير المبيعات</h3>
-          <table className="w-full">
-            <thead>
-              <tr className="text-right border-b border-gray-200">
-                <th className="pb-3 text-gray-600 font-medium">الحالة</th>
-                <th className="pb-3 text-gray-600 font-medium">المبلغ</th>
-                <th className="pb-3 text-gray-600 font-medium">التاريخ</th>
-                <th className="pb-3 text-gray-600 font-medium">العميل</th>
-                <th className="pb-3 text-gray-600 font-medium">رقم الفاتورة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentSales.map((sale, index) => (
-                <tr key={index} className="border-b border-gray-100 last:border-0">
-                  <td className="py-3">
-                    <span className={`px-3 py-1 rounded text-xs font-medium ${
-                      sale.status === 'مدفوع' ? 'bg-yellow-500 text-white' : 
-                      sale.status === 'مسدد' ? 'bg-green-500 text-white' : 
-                      'bg-orange-500 text-white'
-                    }`}>
-                      {sale.status}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-800">{sale.amount}</td>
-                  <td className="py-3 text-gray-800">{sale.date}</td>
-                  <td className="py-3 text-gray-800">{sale.customer}</td>
-                  <td className="py-3 text-gray-800 font-medium">{sale.id}</td>
+        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-4 md:mb-6">
+          <h3 className="text-blue-600 font-bold text-base md:text-lg mb-4">اخر فواتير المبيعات</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[500px]">
+              <thead>
+                <tr className="text-right border-b border-gray-200">
+                  <th className="pb-3 text-gray-600 font-medium text-sm">الحالة</th>
+                  <th className="pb-3 text-gray-600 font-medium text-sm">المبلغ</th>
+                  <th className="pb-3 text-gray-600 font-medium text-sm">التاريخ</th>
+                  <th className="pb-3 text-gray-600 font-medium text-sm">العميل</th>
+                  <th className="pb-3 text-gray-600 font-medium text-sm">رقم الفاتورة</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentSales.map((sale, index) => (
+                  <tr key={index} className="border-b border-gray-100 last:border-0">
+                    <td className="py-3">
+                      <span className={`px-3 py-1 rounded text-xs font-medium ${
+                        sale.status === 'مدفوع' ? 'bg-yellow-500 text-white' : 
+                        sale.status === 'مسدد' ? 'bg-green-500 text-white' : 
+                        'bg-orange-500 text-white'
+                      }`}>
+                        {sale.status}
+                      </span>
+                    </td>
+                    <td className="py-3 text-gray-800 text-sm">{sale.amount}</td>
+                    <td className="py-3 text-gray-800 text-sm">{sale.date}</td>
+                    <td className="py-3 text-gray-800 text-sm">{sale.customer}</td>
+                    <td className="py-3 text-gray-800 font-medium text-sm">{sale.id}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Bottom Summary Cards */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
           {/* Total Products */}
-          <div className="bg-orange-600 rounded-2xl p-6 text-white text-center shadow-lg">
-            <p className="text-base mb-2 opacity-95">اجمالي المنتجات</p>
-            <p className="text-4xl font-bold">250.00 ج</p>
+          <div className="bg-orange-600 rounded-2xl p-4 md:p-6 text-white text-center shadow-lg">
+            <p className="text-sm md:text-base mb-2 opacity-95">اجمالي المنتجات</p>
+            <p className="text-2xl md:text-4xl font-bold">250.00 ج</p>
           </div>
 
           {/* Monthly Expenses */}
-          <div className="bg-lime-600 rounded-2xl p-6 text-white text-center shadow-lg">
-            <p className="text-base mb-2 opacity-95">المصروفات الشهرية</p>
-            <p className="text-4xl font-bold">150.00 ج</p>
+          <div className="bg-lime-600 rounded-2xl p-4 md:p-6 text-white text-center shadow-lg">
+            <p className="text-sm md:text-base mb-2 opacity-95">المصروفات الشهرية</p>
+            <p className="text-2xl md:text-4xl font-bold">150.00 ج</p>
           </div>
 
           {/* Customer Balance */}
-          <div className="bg-sky-500 rounded-2xl p-6 text-white text-center shadow-lg">
-            <p className="text-base mb-2 opacity-95">رصيد العملاء</p>
-            <p className="text-4xl font-bold">50.00 ج</p>
+          <div className="bg-sky-500 rounded-2xl p-4 md:p-6 text-white text-center shadow-lg">
+            <p className="text-sm md:text-base mb-2 opacity-95">رصيد العملاء</p>
+            <p className="text-2xl md:text-4xl font-bold">50.00 ج</p>
           </div>
         </div>
       </main>
